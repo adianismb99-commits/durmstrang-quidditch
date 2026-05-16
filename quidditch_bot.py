@@ -414,6 +414,17 @@ async def jugar(update, context):
 
 # ============= INICIAR EL BOT =============
 def main():
+
+    import sys
+    import asyncio
+    
+    # Solo para Windows con Python 3.14+
+    if sys.platform == "win32" and sys.version_info >= (3, 14):
+        try:
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        except DeprecationWarning:
+            pass  # Ignorar advertencia
+
     # Iniciar base de datos
     iniciar_bd()
     
