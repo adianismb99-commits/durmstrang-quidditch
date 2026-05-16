@@ -3,6 +3,7 @@ import os
 import sqlite3
 import asyncio
 import threading
+import re
 from datetime import datetime
 from telegram import Bot
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -22,11 +23,10 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def defensa_numero(numero):
-    """Convierte un número emoji a su flecha correspondiente"""
     tabla = {
-        '1️⃣': '⬅️', '2️⃣': '⬅️', '3️⃣': '⬆️',
-        '4️⃣': '➡️', '5️⃣': '⬅️', '6️⃣': '➡️',
-        '7️⃣': '➡️', '8️⃣': '⬆️', '9️⃣': '⬆️'
+        '1': '⬅️', '2': '⬅️', '3': '⬆️',
+        '4': '➡️', '5': '⬅️', '6': '➡️',
+        '7': '➡️', '8': '⬆️', '9': '⬆️'
     }
     return tabla.get(numero, '❌')
 
@@ -39,8 +39,15 @@ def health_check():
     return "OK", 200
 
 def run_web():
-    # Ejecuta el pequeño servidor web en el puerto 10000
-    app.run(host='0.0.0.0', port=10000)
+    import os
+    port = int(os.environ.get('PORT', 10000))
+    for p in [port, 10001, 10002, 10003]:
+        try:
+            app.run(host='0.0.0.0', port=p, use_reloader=False)  # Cambiado a 'app'
+            break
+        except OSError:
+            print(f"Puerto {p} ocupado, intentando con el siguiente...")
+            continue
 
 # === CONFIGURACION ===
 # Toma el token de las variables de entorno del sistema.
@@ -147,7 +154,7 @@ async def manejar_mensajes(update, context):
                 await update.message.reply_text(
                     f"✅ Pase correcto. Llevas {pases_actuales} pases.\n\n"
                     f"🎯 ¡Ya puedes disparar! Usa el formato:\n"
-                    f"`❤️🏉🅰️1️⃣2️⃣3️⃣`\n\n"
+                    f"`❤️🏉🅰️123`\n\n"
                     f"(Recuerda: 3 números del 1 al 9)"
                 )
             else:
@@ -168,8 +175,8 @@ async def manejar_mensajes(update, context):
                     f"Completa los pases mínimos primero."
                 )
             else:
-                # Extraer los 3 números (cualquier orden, cualquier combinación)
-                numeros = [c for c in mensaje if c in ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣']]
+                # Extraer números (acepta 1,2,3 en lugar de 1️⃣,2️⃣,3️⃣)
+                numeros = re.findall(r'[1-9]', mensaje)
             
                 if len(numeros) == 3:
                     flechas = ''.join([defensa_numero(n) for n in numeros])
@@ -183,25 +190,24 @@ async def manejar_mensajes(update, context):
                     elif '🅾️' in mensaje:
                         aro = '🅾️'
                 
-                    # Detectar qué casa usó (opcional)
+                    # Detectar qué casa usó
                     casa = "❤️" if '❤️' in mensaje else "💜" if '💜' in mensaje else "💚" if '💚' in mensaje else "?"
                 
                     await update.message.reply_text(
                         f"🎯 ¡Disparo realizado!\n"
                         f"Casa: {casa} | Aro: {aro}\n"
-                        f"Secuencia de números: {''.join(numeros)}\n\n"
-                        f"🟡 El guardián debe defender con las flechas:\n"
-                        f"{flechas}\n\n"
-                        f"✅ ¡GOL! +10 puntos (en práctica es un simulacro)"
+                        f"Números: {''.join(numeros)}\n\n"
+                        f"🟡 Defensa del guardián: {flechas}\n\n"
+                        f"✅ ¡GOL! +10 puntos"
                     )
                 
-                    # Reiniciar la práctica después del gol
+                    # Reiniciar práctica
                     context.user_data['pases_cazador'] = 0
                     context.user_data['pases_realizados'] = []
                 else:
                     await update.message.reply_text(
-                        f"❌ Disparo inválido. Debes usar EXACTAMENTE 3 números.\n"
-                        f"Ejemplo: `❤️🏉🅰️1️⃣2️⃣3️⃣`\n"
+                        f"❌ Disparo inválido. Debes usar EXACTAMENTE 3 números (1-9).\n"
+                        f"Ejemplo: `❤️🏉🅰️123`\n"
                         f"Tú usaste {len(numeros)} números: {''.join(numeros) if numeros else 'ninguno'}"
                     )
         
@@ -211,7 +217,7 @@ async def manejar_mensajes(update, context):
                 f"📝 **Formato de pase:**\n"
                 f"`❤️🏉@cazador2`\n\n"
                 f"🎯 **Formato de disparo:**\n"
-                f"`❤️🏉🅰️1️⃣2️⃣3️⃣`\n\n"
+                f"`❤️🏉🅰️123`\n\n"
                 f"Escribe 'salir' para terminar."
             )
     
