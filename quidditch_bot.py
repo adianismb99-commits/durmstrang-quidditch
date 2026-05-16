@@ -26,6 +26,8 @@ def run_web():
 # Toma el token de las variables de entorno del sistema.
 # Es mucho más seguro y necesario para Render.
 TOKEN = os.environ.get("8840107743:AAFNg1W9aSNMH_4vxYyPUfFFHgsCfYMsJZA")
+if not TOKEN:
+    TOKEN = "8840107743:AAFNg1W9aSNMH_4vxYyPUfFFHgsCfYMsJZA"
 
 # ============= BASE DE DATOS =============
 
