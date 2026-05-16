@@ -439,7 +439,7 @@ def main():
     print("🐲 Bot de Quidditch iniciado...")
 
     # Inicia el servidor web en un hilo separado (para que no bloquee al bot)
-threading.Thread(target=run_web).start()
+    threading.Thread(target=run_web).start()
 
     app.run_polling()
 
