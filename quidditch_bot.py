@@ -10,6 +10,15 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 from telegram import ReplyKeyboardMarkup, KeyboardButton
 from flask import Flask
 
+def defensa_numero(numero):
+    """Convierte un número emoji a su flecha correspondiente"""
+    tabla = {
+        '1️⃣': '⬅️', '2️⃣': '⬅️', '3️⃣': '⬆️',
+        '4️⃣': '➡️', '5️⃣': '⬅️', '6️⃣': '➡️',
+        '7️⃣': '➡️', '8️⃣': '⬆️', '9️⃣': '⬆️'
+    }
+    return tabla.get(numero, '❌')
+
 # === SERVICIO WEB PARA KEEP-ALIVE ===
 app = Flask(__name__)
 
@@ -100,14 +109,83 @@ async def manejar_mensajes(update, context):
     
     if practica == 'cazador':
         mensaje = update.message.text
+        
         if mensaje.lower() == 'salir':
             context.user_data['practica_activa'] = None
+            context.user_data['pases_cazador'] = 0
             await update.message.reply_text("✅ Práctica de Cazador finalizada. Usa /practicar para volver.")
             return
         
-        # Aquí irá la lógica de pases y disparos
-        await update.message.reply_text(f"📝 Recibido: {mensaje}\n\n(Ejercicio de Cazador en desarrollo)")
+        # Inicializar contador de pases si no existe
+        if 'pases_cazador' not in context.user_data:
+            context.user_data['pases_cazador'] = 0
+            context.user_data['pases_realizados'] = []
         
+        # Verificar si es un pase
+        if '🏉' in mensaje and '@' in mensaje:
+            context.user_data['pases_cazador'] += 1
+            context.user_data['pases_realizados'].append(mensaje)
+            pases_actuales = context.user_data['pases_cazador']
+            
+            if pases_actuales < 4:
+                await update.message.reply_text(
+                    f"✅ Pase correcto. Llevas {pases_actuales}/4 pases.\n"
+                    f"Sigue pasando la Quaffle. (máximo 10 pases)"
+                )
+            elif 4 <= pases_actuales <= 10:
+                await update.message.reply_text(
+                    f"✅ Pase correcto. Llevas {pases_actuales} pases.\n\n"
+                    f"🎯 ¡Ya puedes disparar! Usa el formato:\n"
+                    f"`❤️🏉🅰️1️⃣2️⃣3️⃣`\n\n"
+                    f"(Recuerda: 3 números del 1 al 9)"
+                )
+            else:
+                await update.message.reply_text(
+                    f"❌ Demasiados pases ({pases_actuales}). Máximo 10.\n"
+                    f"Pierdes la Quaffle. Práctica reiniciada."
+                )
+                context.user_data['pases_cazador'] = 0
+                context.user_data['pases_realizados'] = []
+        
+        # Verificar si es un disparo
+        elif '🏉' in mensaje and ('🅰️' in mensaje or '🅱️' in mensaje or '🅾️' in mensaje):
+            pases = context.user_data.get('pases_cazador', 0)
+            
+            if pases < 4:
+                await update.message.reply_text(
+                    f"❌ No puedes disparar todavía. Llevas solo {pases}/4 pases.\n"
+                    f"Completa los pases mínimos primero."
+                )
+            else:
+                numeros = [c for c in mensaje if c in ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣']]
+                if len(numeros) == 3:
+                    flechas = ''.join([defensa_numero(n) for n in numeros])
+                    await update.message.reply_text(
+                        f"🎯 ¡Disparo realizado! Secuencia: {''.join(numeros)}\n\n"
+                        f"🟡 El guardián debe defender con las flechas correspondientes:\n"
+                        f"1⬅️ 2⬅️ 3⬆️ 4➡️ 5⬅️ 6➡️ 7➡️ 8⬆️ 9⬆️\n\n"
+                        f"📝 Defensa correcta: {flechas}\n\n"
+                        f"✅ ¡Gol! +10 puntos (en práctica no sumas, solo aprendes)"
+                    )
+                    context.user_data['pases_cazador'] = 0
+                    context.user_data['pases_realizados'] = []
+                else:
+                    await update.message.reply_text(
+                        f"❌ Formato de disparo incorrecto.\n"
+                        f"Debes usar 3 números (ejemplo: 1️⃣2️⃣3️⃣)\n"
+                        f"Formato correcto: `❤️🏉🅰️1️⃣2️⃣3️⃣`"
+                    )
+        
+        else:
+            await update.message.reply_text(
+                f"❌ Formato no reconocido.\n\n"
+                f"📝 **Formato de pase:**\n"
+                f"`❤️🏉@cazador2`\n\n"
+                f"🎯 **Formato de disparo:**\n"
+                f"`❤️🏉🅰️1️⃣2️⃣3️⃣`\n\n"
+                f"Escribe 'salir' para terminar."
+            )
+    
     elif practica == 'guardian':
         mensaje = update.message.text
         if mensaje.lower() == 'salir':
@@ -115,9 +193,8 @@ async def manejar_mensajes(update, context):
             await update.message.reply_text("✅ Práctica de Guardián finalizada. Usa /practicar para volver.")
             return
         
-        # Aquí irá la lógica de defensa
         await update.message.reply_text(f"🛡️ Defensa recibida: {mensaje}\n\n(Ejercicio de Guardián en desarrollo)")
-        
+    
     elif practica == 'golpeador':
         mensaje = update.message.text
         if mensaje.lower() == 'salir':
@@ -126,7 +203,7 @@ async def manejar_mensajes(update, context):
             return
         
         await update.message.reply_text(f"⚔️ Acción recibida: {mensaje}\n\n(Ejercicio de Golpeador en desarrollo)")
-        
+    
     elif practica == 'buscador':
         mensaje = update.message.text
         if mensaje.lower() == 'salir':
@@ -135,14 +212,13 @@ async def manejar_mensajes(update, context):
             return
         
         await update.message.reply_text(f"🔍 Secuencia recibida: {mensaje}\n\n(Ejercicio de Buscador en desarrollo)")
-        
+    
     elif context.user_data.get('esperando_casa'):
         casa = update.message.text
         if casa in ["Galkin", "Darfor", "Olsson"]:
             user_id = update.effective_user.id
             nombre = update.effective_user.first_name
             
-            # Guardar en BD (cargo por defecto: Estudiante)
             conn = sqlite3.connect('quidditch.db')
             cursor = conn.cursor()
             cursor.execute(
@@ -165,6 +241,7 @@ async def manejar_mensajes(update, context):
             context.user_data['esperando_casa'] = False
         else:
             await update.message.reply_text("Casa no válida. Elige: Galkin, Darfor u Olsson")
+    
     else:
         await update.message.reply_text("Usa /start para comenzar o /crear_cuenta para registrarte")
 
