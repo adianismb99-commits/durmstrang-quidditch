@@ -58,39 +58,35 @@ if not TOKEN:
 
 # ============= BASE DE DATOS =============
 
-def iniciar_bd():
-    conn = sqlite3.connect('quidditch.db')
-    cursor = conn.cursor()
-    
-    # Tabla de usuarios
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS usuarios (
-            id_telegram INTEGER PRIMARY KEY,
-            nombre TEXT,
-            casa TEXT,
-            cargo TEXT,
-            puntos_totales INTEGER DEFAULT 0,
-            fecha_registro TIMESTAMP
-        )
-    ''')
-    
-    conn.commit()
-    conn.close()
+#def iniciar_bd():
+#    conn = sqlite3.connect('quidditch.db')
+#    cursor = conn.cursor()
+#    
+#    # Tabla de usuarios
+#    cursor.execute('''
+#        CREATE TABLE IF NOT EXISTS usuarios (
+#            id_telegram INTEGER PRIMARY KEY,
+#            nombre TEXT,
+#            casa TEXT,
+#            cargo TEXT,
+#            puntos_totales INTEGER DEFAULT 0,
+#            fecha_registro TIMESTAMP
+#        )
+#    ''')
+#    
+#    conn.commit()
+#    conn.close()
 
 # ============= COMANDOS =============
 async def start(update, context):
     user_id = update.effective_user.id
     nombre = update.effective_user.first_name
     
-    conn = sqlite3.connect('quidditch.db')
-    cursor = conn.cursor()
+    # Buscar en Supabase
+    response = supabase.table('usuarios').select('*').eq('id_telegram', user_id).execute()
     
-    cursor.execute("SELECT * FROM usuarios WHERE id_telegram = ?", (user_id,))
-    usuario = cursor.fetchone()
-    conn.close()
-    
-    if usuario is None:
-        # Usuario nuevo: pedir crear cuenta
+    if not response.data:
+        # Usuario nuevo
         await update.message.reply_text(
             f"✨ ¡Bienvenido {nombre} al Quidditch Emoji Bot! ✨\n\n"
             "Para comenzar, necesitas crear una cuenta.\n\n"
@@ -99,10 +95,11 @@ async def start(update, context):
         )
     else:
         # Usuario existente
+        usuario = response.data[0]
         await update.message.reply_text(
-            f"¡Bienvenido de vuelta {usuario[1]}!\n"
-            f"Casa: {usuario[2]}\n"
-            f"Cargo: {usuario[3]}\n\n"
+            f"¡Bienvenido de vuelta {usuario['nombre']}!\n"
+            f"Casa: {usuario['casa']}\n"
+            f"Cargo: {usuario['cargo']}\n\n"
             "¿Qué deseas hacer?\n"
             "/practicar - Entrenar una posición\n"
             "/jugar - Iniciar una partida\n"
@@ -539,7 +536,7 @@ def main():
             pass  # Ignorar advertencia
 
     # Iniciar base de datos
-    iniciar_bd()
+    #iniciar_bd()
     
     # Crear la aplicación
     app = Application.builder().token(TOKEN).build()
