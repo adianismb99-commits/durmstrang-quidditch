@@ -437,10 +437,10 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, manejar_mensajes))
      
     print("🐲 Bot de Quidditch iniciado...")
-
-    # Inicia el servidor web en un hilo separado (para que no bloquee al bot)
+    
+    # Inicia el servidor web en un hilo separado
     threading.Thread(target=run_web).start()
-
+    
     app.run_polling()
 
 if __name__ == "__main__":
