@@ -147,33 +147,51 @@ async def manejar_mensajes(update, context):
                 context.user_data['pases_cazador'] = 0
                 context.user_data['pases_realizados'] = []
         
-        # Verificar si es un disparo
+        # Verificar si es un disparo (formato: [Casa]🏉[Aro][3 números])
         elif '🏉' in mensaje and ('🅰️' in mensaje or '🅱️' in mensaje or '🅾️' in mensaje):
             pases = context.user_data.get('pases_cazador', 0)
-            
+        
             if pases < 4:
                 await update.message.reply_text(
                     f"❌ No puedes disparar todavía. Llevas solo {pases}/4 pases.\n"
                     f"Completa los pases mínimos primero."
                 )
             else:
+                # Extraer los 3 números (cualquier orden, cualquier combinación)
                 numeros = [c for c in mensaje if c in ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣']]
+            
                 if len(numeros) == 3:
                     flechas = ''.join([defensa_numero(n) for n in numeros])
+                
+                    # Detectar qué aro usó
+                    aro = None
+                    if '🅰️' in mensaje:
+                        aro = '🅰️'
+                    elif '🅱️' in mensaje:
+                        aro = '🅱️'
+                    elif '🅾️' in mensaje:
+                        aro = '🅾️'
+                
+                    # Detectar qué casa usó (opcional)
+                    casa = "❤️" if '❤️' in mensaje else "💜" if '💜' in mensaje else "💚" if '💚' in mensaje else "?"
+                
                     await update.message.reply_text(
-                        f"🎯 ¡Disparo realizado! Secuencia: {''.join(numeros)}\n\n"
-                        f"🟡 El guardián debe defender con las flechas correspondientes:\n"
-                        f"1⬅️ 2⬅️ 3⬆️ 4➡️ 5⬅️ 6➡️ 7➡️ 8⬆️ 9⬆️\n\n"
-                        f"📝 Defensa correcta: {flechas}\n\n"
-                        f"✅ ¡Gol! +10 puntos (en práctica no sumas, solo aprendes)"
+                        f"🎯 ¡Disparo realizado!\n"
+                        f"Casa: {casa} | Aro: {aro}\n"
+                        f"Secuencia de números: {''.join(numeros)}\n\n"
+                        f"🟡 El guardián debe defender con las flechas:\n"
+                        f"{flechas}\n\n"
+                        f"✅ ¡GOL! +10 puntos (en práctica es un simulacro)"
                     )
+                
+                    # Reiniciar la práctica después del gol
                     context.user_data['pases_cazador'] = 0
                     context.user_data['pases_realizados'] = []
                 else:
                     await update.message.reply_text(
-                        f"❌ Formato de disparo incorrecto.\n"
-                        f"Debes usar 3 números (ejemplo: 1️⃣2️⃣3️⃣)\n"
-                        f"Formato correcto: `❤️🏉🅰️1️⃣2️⃣3️⃣`"
+                        f"❌ Disparo inválido. Debes usar EXACTAMENTE 3 números.\n"
+                        f"Ejemplo: `❤️🏉🅰️1️⃣2️⃣3️⃣`\n"
+                        f"Tú usaste {len(numeros)} números: {''.join(numeros) if numeros else 'ninguno'}"
                     )
         
         else:
