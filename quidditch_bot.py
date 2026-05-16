@@ -9,6 +9,17 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
 from telegram import ReplyKeyboardMarkup, KeyboardButton
 from flask import Flask
+from supabase import create_client, Client
+from dotenv import load_dotenv
+load_dotenv()  # <-- Esto lee el archivo .env y crea las variables de entorno
+
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise Exception("❌ Faltan variables SUPABASE_URL o SUPABASE_KEY")
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def defensa_numero(numero):
     """Convierte un número emoji a su flecha correspondiente"""
@@ -34,7 +45,7 @@ def run_web():
 # === CONFIGURACION ===
 # Toma el token de las variables de entorno del sistema.
 # Es mucho más seguro y necesario para Render.
-TOKEN = os.environ.get("8840107743:AAFNg1W9aSNMH_4vxYyPUfFFHgsCfYMsJZA")
+TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "8840107743:AAFNg1W9aSNMH_4vxYyPUfFFHgsCfYMsJZA")
 if not TOKEN:
     TOKEN = "8840107743:AAFNg1W9aSNMH_4vxYyPUfFFHgsCfYMsJZA"
 
@@ -237,14 +248,15 @@ async def manejar_mensajes(update, context):
             user_id = update.effective_user.id
             nombre = update.effective_user.first_name
             
-            conn = sqlite3.connect('quidditch.db')
-            cursor = conn.cursor()
-            cursor.execute(
-                "INSERT INTO usuarios (id_telegram, nombre, casa, cargo, fecha_registro) VALUES (?, ?, ?, ?, ?)",
-                (user_id, nombre, casa, "Estudiante", datetime.now())
-            )
-            conn.commit()
-            conn.close()
+            data = {
+                "id_telegram": user_id,
+                "nombre": nombre,
+                "casa": casa,
+                "cargo": "Estudiante",
+                "puntos_totales": 0,
+                "fecha_registro": datetime.now().isoformat()
+            }
+            supabase.table('usuarios').insert(data).execute()
             
             await update.message.reply_text(
                 f"✅ ¡Cuenta creada!\n\n"
@@ -552,4 +564,5 @@ def main():
     app.run_polling()
 
 if __name__ == "__main__":
+#>>>>>>> 22b6683ae61f0cfdfd36d8bfd9f783e168acea0b
     main()
