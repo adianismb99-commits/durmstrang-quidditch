@@ -185,10 +185,10 @@ async def manejar_mensajes(update, context):
                     aro = None
                     if '🅰️' in mensaje:
                         aro = '🅰️'
-                    elif '🅱️' in mensaje:
-                        aro = '🅱️'
-                    elif '🅾️' in mensaje:
-                        aro = '🅾️'
+                    elif '🅱' in mensaje:
+                        aro = '🅱'
+                    elif '🅾' in mensaje:
+                        aro = '🅾'
                 
                     # Detectar qué casa usó
                     casa = "❤️" if '❤️' in mensaje else "💜" if '💜' in mensaje else "💚" if '💚' in mensaje else "?"
