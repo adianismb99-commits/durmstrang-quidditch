@@ -2,11 +2,25 @@ import json
 import os
 import sqlite3
 import asyncio
+import threading
 from datetime import datetime
 from telegram import Bot
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
 from telegram import ReplyKeyboardMarkup, KeyboardButton
+from flask import Flask
+
+# === SERVICIO WEB PARA KEEP-ALIVE ===
+app = Flask(__name__)
+
+@app.route('/')
+def health_check():
+    # Esta es la respuesta simple que cron-job.org verá
+    return "OK", 200
+
+def run_web():
+    # Ejecuta el pequeño servidor web en el puerto 10000
+    app.run(host='0.0.0.0', port=10000)
 
 # === CONFIGURACION ===
 # Toma el token de las variables de entorno del sistema.
@@ -423,6 +437,10 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, manejar_mensajes))
      
     print("🐲 Bot de Quidditch iniciado...")
+
+    # Inicia el servidor web en un hilo separado (para que no bloquee al bot)
+threading.Thread(target=run_web).start()
+
     app.run_polling()
 
 if __name__ == "__main__":
