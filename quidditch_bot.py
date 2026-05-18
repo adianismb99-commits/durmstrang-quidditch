@@ -227,7 +227,7 @@ async def aprender(update, context):
     keyboard = [
         [InlineKeyboardButton("📜 Reglas generales", callback_data="aprender_general"), InlineKeyboardButton("🔴 Cazador", callback_data="aprender_cazador")],
         [InlineKeyboardButton("🟡 Guardián", callback_data="aprender_guardian"), InlineKeyboardButton("🟢 Golpeador", callback_data="aprender_golpeador")],
-        [InlineKeyboardButton("🟣 Buscador", callback_data="aprender_buscador"), InlineKeyboardButton("⚡ Práctica rápida", callback_data="aprender_practica")]
+        [InlineKeyboardButton("🟣 Buscador", callback_data="aprender_buscador")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text("📚 *CENTRO DE APRENDIZAJE*\n\nElige una opción:", reply_markup=reply_markup, parse_mode="Markdown")
@@ -372,7 +372,7 @@ async def regresar_menu(update, context):
     keyboard = [
         [InlineKeyboardButton("📜 Reglas generales", callback_data="aprender_general"), InlineKeyboardButton("🔴 Cazador", callback_data="aprender_cazador")],
         [InlineKeyboardButton("🟡 Guardián", callback_data="aprender_guardian"), InlineKeyboardButton("🟢 Golpeador", callback_data="aprender_golpeador")],
-        [InlineKeyboardButton("🟣 Buscador", callback_data="aprender_buscador"), InlineKeyboardButton("⚡ Práctica rápida", callback_data="aprender_practica")]
+        [InlineKeyboardButton("🟣 Buscador", callback_data="aprender_buscador")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await query.edit_message_text(
