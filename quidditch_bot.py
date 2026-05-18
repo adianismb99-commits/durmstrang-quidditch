@@ -464,6 +464,7 @@ def main():
     app.add_handler(CallbackQueryHandler(boton_aprender, pattern="aprender_"))
     app.add_handler(CallbackQueryHandler(ir_a_practicar, pattern="ir_a_practicar"))
     app.add_handler(CallbackQueryHandler(aprender_menu, pattern="aprender_menu"))
+
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, manejar_mensajes))
     
     print("🐲 Bot de Quidditch iniciado...")
