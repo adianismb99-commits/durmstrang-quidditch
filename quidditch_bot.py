@@ -281,20 +281,20 @@ async def manejar_mensajes(update, context):
                 defensa_correcta = context.user_data.get('defensa_correcta', '')
             
                 # ========== DIAGNÓSTICO ==========
-                await update.message.reply_text(
-                    f"🔍 *DIAGNÓSTICO - LO QUE RECIBÍ:*\n"
-                    f"`{mensaje}`\n\n"
-                    f"*Contenido del mensaje (caracter a caracter):*\n"
-                    f"`{list(mensaje)}`\n\n"
-                    f"*Lo que esperaba:*\n"
-                    f"Defensa correcta: `{disparo.get('casa')}🧹{disparo.get('aro')}{defensa_correcta}`\n\n"
-                    f"*Tu casa debería ser:* {casa_usuario}\n"
-                    f"*Aro del disparo:* {disparo.get('aro')}\n\n"
-                    f"📝 *Escribe exactamente:*\n"
-                    f"`{casa_usuario}🧹{disparo.get('aro')}{defensa_correcta}`",
-                    parse_mode="Markdown"
-                )
-                return  # Salimos para no procesar más
+                #await update.message.reply_text(
+                #    f"🔍 *DIAGNÓSTICO - LO QUE RECIBÍ:*\n"
+                #    f"`{mensaje}`\n\n"
+                #    f"*Contenido del mensaje (caracter a caracter):*\n"
+                #    f"`{list(mensaje)}`\n\n"
+                #    f"*Lo que esperaba:*\n"
+                #    f"Defensa correcta: `{disparo.get('casa')}🧹{disparo.get('aro')}{defensa_correcta}`\n\n"
+                #    f"*Tu casa debería ser:* {casa_usuario}\n"
+                #    f"*Aro del disparo:* {disparo.get('aro')}\n\n"
+                #    f"📝 *Escribe exactamente:*\n"
+                #    f"`{casa_usuario}🧹{disparo.get('aro')}{defensa_correcta}`",
+                #    parse_mode="Markdown"
+                #)
+                #return  # Salimos para no procesar más
             
             # ========== EXTRAER FLECHAS (MÚLTIPLES VARIANTES) ==========
             flechas_map = {
@@ -650,22 +650,21 @@ async def practicar_guardian(update, context):
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     # Mostrar la casa que debe usar
-    casa_emoji = casa_usuario
-    casa_nombre = "Galkin" if casa_emoji == "❤️" else "Darfor" if casa_emoji == "💜" else "Olsson"
-    
     await query.edit_message_text(
         "🟡 *PRÁCTICA DE GUARDIÁN* 🟡\n\n"
-        "📌 *Objetivo:* Defiende los disparos para evitar goles.\n\n"
-        "📊 *TABLA PARA DEFENDER DISPAROS:*\n"
-        "• (2️⃣5️⃣1️⃣) → 🧹⬅️\n"
-        "• (8️⃣9️⃣3️⃣) → 🧹⬆️\n"
-        "• (7️⃣4️⃣6️⃣) → 🧹➡️\n\n"
+        f"🏠 *Tu casa:* {casa_usuario}\n"
+        "📌 *Recuerda usar siempre tu casa en la defensa.*\n\n"
+        "📊 *TABLA DE NÚMEROS A FLECHAS:*\n"
+        "`1⬅️ 2⬅️ 3⬆️ 4➡️ 5⬅️ 6➡️ 7➡️ 8⬆️ 9⬆️`\n\n"
         "📝 *Formato de defensa:*\n"
-        "`[Casa]🧹[Aro][3 flechas]`\n\n"
+        f"`{casa_usuario}🧹[Aro][3 flechas]`\n\n"
         "💡 *Ejemplo:*\n"
-        "Si el disparo es: `❤️🏉🅰️1️⃣2️⃣3️⃣`\n"
-        "La defensa correcta es: `❤️🧹🅰️⬅️⬅️⬆️`\n\n"
-        "⚡ *Escribe 'si' cuando estés listo para comenzar.*\n"
+        "Si el disparo es: `❤️🏉🅰️123`\n"
+        "La defensa correcta sería: `❤️🧹🅰️⬅️⬅️⬆️`\n\n"
+        "⚡ *Variantes permitidas:*\n"
+        "• Aros: `🅰️`, `🅰`, `A` | `🅱️`, `🅱`, `B` | `🅾️`, `🅾`, `O`\n"
+        "• Flechas: `⬆️`, `⬇️`, `➡️`, `⬅️`\n\n"
+        "⚡ *Escribe 'si' cuando estés listo.*\n"
         "⚡ *Escribe 'salir' para terminar.*",
         reply_markup=reply_markup,
         parse_mode="Markdown"
