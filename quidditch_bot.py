@@ -15,6 +15,14 @@ TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "8840107743:AAFNg1W9aSNMH_4vxYyPUfF
 # === SERVICIO WEB PARA KEEP-ALIVE ===
 flask_app = Flask(__name__)
 
+# Obtener la casa del usuario desde la base de datos
+conn = sqlite3.connect('quidditch.db')
+cursor = conn.cursor()
+cursor.execute("SELECT casa FROM usuarios WHERE id_telegram = ?", (user_id,))
+resultado = cursor.fetchone()
+conn.close()
+casa_usuario = resultado[0] if resultado else "❤️"  # Por defecto ❤️ si no encuentra
+
 @flask_app.route('/')
 def health_check():
     return "OK", 200
@@ -64,6 +72,18 @@ def generar_disparo_aleatorio():
     aro = random.choice(aros)
     numeros = ''.join([str(random.randint(1, 9)) for _ in range(3)])
     return casa, aro, numeros
+
+#=== GENERAR SECUENCIA DE SNITCH ===
+
+def generar_secuencia():
+    direcciones = ['ARRIBA', 'ABAJO', 'DERECHA', 'IZQUIERDA']
+    longitud = random.randint(6, 10)
+    palabras = random.choices(direcciones, k=longitud)
+    flechas = ''.join([
+        p.replace('ARRIBA', '⬆️').replace('ABAJO', '⬇️').replace('DERECHA', '➡️').replace('IZQUIERDA', '⬅️') 
+        for p in palabras
+    ])
+    return palabras, flechas
 
 # ============= COMANDOS =============
 async def start(update, context):
@@ -211,6 +231,7 @@ async def manejar_mensajes(update, context):
     
     elif practica == 'guardian':
         mensaje = update.message.text
+        casa_usuario = context.user_data.get('casa_usuario', '❤️')
         
         if mensaje.lower() == 'salir':
             aciertos = context.user_data.get('guardian_aciertos', 0)
@@ -226,7 +247,7 @@ async def manejar_mensajes(update, context):
             )
             return
         
-        # Si está esperando confirmación "si"
+        # Esperando confirmación "si"
         if context.user_data.get('guardian_esperando_listo'):
             if mensaje.lower() == 'si':
                 context.user_data['guardian_esperando_listo'] = False
@@ -237,53 +258,61 @@ async def manejar_mensajes(update, context):
                 context.user_data['disparo_actual'] = {'casa': casa, 'aro': aro, 'numeros': numeros}
                 context.user_data['defensa_correcta'] = ''.join([defensa_numero(n) for n in numeros])
                 
+                # Calcular flechas guía
+                flechas_guia = ' '.join([f"{n}→{defensa_numero(n)}" for n in numeros])
+                
                 await update.message.reply_text(
                     f"⚡ *¡PRIMER DISPARO!* ⚡\n\n"
                     f"`{casa}🏉{aro}{numeros}`\n\n"
+                    f"📊 *Guía de conversión:*\n"
+                    f"`{flechas_guia}`\n\n"
                     f"📝 *Formato de defensa:*\n"
-                    f"`{casa}🧹{aro}⬆️⬇️➡️`\n\n"
-                    f"🛡️ *Escribe tu defensa:*",
+                    f"`{casa_usuario}🧹{aro}⬆️⬇️➡️`\n\n"
+                    f"🛡️ *Escribe tu defensa (usa solo flechas):*",
                     parse_mode="Markdown"
                 )
             else:
                 await update.message.reply_text(
-                    "🟡 *Esperando confirmación.*\n\n"
-                    "Escribe *'si'* cuando estés listo para comenzar.\n"
-                    "Escribe *'salir'* para terminar.",
+                    f"🟡 *Esperando confirmación.*\n\n"
+                    f"Escribe *'si'* cuando estés listo.\n"
+                    f"Escribe *'salir'* para terminar.",
                     parse_mode="Markdown"
                 )
             return
         
-        # Si ya está en juego y esperando defensa
+        # Defendiendo disparo actual
         if context.user_data.get('guardian_esperando_defensa'):
             disparo = context.user_data.get('disparo_actual', {})
             defensa_correcta = context.user_data.get('defensa_correcta', '')
             
-            # Extraer flechas del mensaje
-            flechas = re.findall(r'[⬆️⬇️➡️⬅️]', mensaje)
-            flechas_str = ''.join(flechas)
+            # Extraer flechas del mensaje (aceptando múltiples variantes)
+            flechas_encontradas = re.findall(r'[⬆️⬇️➡️⬅️]', mensaje)
+            flechas_str = ''.join(flechas_encontradas)
             
-            # Extraer aro del mensaje (aceptando múltiples variantes)
+            # Extraer aro del mensaje
             aro_usado = None
-            if '🅰' in mensaje or '🅰️' in mensaje or 'A' in mensaje:
+            if '🅰' in mensaje or '🅰️' in mensaje or 'A' in mensaje or '🇦' in mensaje:
                 aro_usado = '🅰️'
-            elif '🅱' in mensaje or '🅱️' in mensaje or 'B' in mensaje:
+            elif '🅱' in mensaje or '🅱️' in mensaje or 'B' in mensaje or '🇧' in mensaje:
                 aro_usado = '🅱️'
-            elif '🅾' in mensaje or '🅾️' in mensaje or 'O' in mensaje:
+            elif '🅾' in mensaje or '🅾️' in mensaje or 'O' in mensaje or '🇴' in mensaje:
                 aro_usado = '🅾️'
             
-            # Extraer casa del mensaje
+            # Verificar que se usó la casa correcta del usuario
             casa_usada = None
-            if '❤️' in mensaje:
+            if casa_usuario == '❤️' and '❤️' in mensaje:
                 casa_usada = '❤️'
-            elif '💜' in mensaje:
+            elif casa_usuario == '💜' and '💜' in mensaje:
                 casa_usada = '💜'
-            elif '💚' in mensaje:
+            elif casa_usuario == '💚' and '💚' in mensaje:
                 casa_usada = '💚'
             
-            if len(flechas) == 3 and aro_usado == disparo.get('aro') and casa_usada == disparo.get('casa'):
+            # Verificar que se usó la escoba
+            tiene_escoba = '🧹' in mensaje
+            
+            # Validar defensa
+            if len(flechas_str) == 3 and aro_usado == disparo.get('aro') and casa_usada == casa_usuario and tiene_escoba:
                 if flechas_str == defensa_correcta:
-                    # Defensa exitosa
                     aciertos = context.user_data.get('guardian_aciertos', 0) + 1
                     context.user_data['guardian_aciertos'] = aciertos
                     
@@ -295,15 +324,17 @@ async def manejar_mensajes(update, context):
                         parse_mode="Markdown"
                     )
                 else:
-                    # Defensa fallida
                     fallos = context.user_data.get('guardian_fallos', 0) + 1
                     context.user_data['guardian_fallos'] = fallos
+                    
+                    # Calcular flechas correctas para mostrar
+                    flechas_correctas = ' '.join([f"{disparo.get('numeros')[i]}→{defensa_correcta[i]}" for i in range(3)])
                     
                     await update.message.reply_text(
                         f"❌ *¡DEFENSA FALLIDA!*\n\n"
                         f"Disparo: {disparo.get('casa')}🏉{disparo.get('aro')}{disparo.get('numeros')}\n"
                         f"Tu defensa: {casa_usada}🧹{aro_usado}{flechas_str}\n"
-                        f"Defensa correcta: {disparo.get('casa')}🧹{disparo.get('aro')}{defensa_correcta}\n\n"
+                        f"Conversión correcta: {flechas_correctas}\n\n"
                         f"📊 *Aciertos:* {context.user_data.get('guardian_aciertos', 0)} | *Fallos:* {fallos}",
                         parse_mode="Markdown"
                     )
@@ -313,21 +344,36 @@ async def manejar_mensajes(update, context):
                 context.user_data['disparo_actual'] = {'casa': casa, 'aro': aro, 'numeros': numeros}
                 context.user_data['defensa_correcta'] = ''.join([defensa_numero(n) for n in numeros])
                 
+                flechas_guia = ' '.join([f"{n}→{defensa_numero(n)}" for n in numeros])
+                
                 await update.message.reply_text(
                     f"🔄 *NUEVO DISPARO:*\n\n"
                     f"`{casa}🏉{aro}{numeros}`\n\n"
-                    f"🛡️ *Escribe tu defensa:*",
+                    f"📊 *Guía de conversión:*\n"
+                    f"`{flechas_guia}`\n\n"
+                    f"🛡️ *Escribe tu defensa (usa tu casa {casa_usuario} y escoba 🧹):*",
                     parse_mode="Markdown"
                 )
             else:
+                # Mensaje de error con recordatorios
+                errores = []
+                if not tiene_escoba:
+                    errores.append("• Falta la escoba `🧹`")
+                if casa_usada != casa_usuario:
+                    errores.append(f"• Usa tu casa {casa_usuario}")
+                if aro_usado != disparo.get('aro'):
+                    errores.append(f"• Usa el mismo aro del disparo ({disparo.get('aro')})")
+                if len(flechas_str) != 3:
+                    errores.append("• Usa exactamente 3 flechas (`⬆️`, `⬇️`, `➡️`, `⬅️`)")
+                
+                recordatorio = "\n".join(errores)
+                
                 await update.message.reply_text(
                     f"❌ *Formato incorrecto.*\n\n"
+                    f"📝 *Recordatorio:*\n"
+                    f"{recordatorio}\n\n"
                     f"📝 *Formato correcto:*\n"
-                    f"`{disparo.get('casa')}🧹{disparo.get('aro')}⬆️⬇️➡️`\n\n"
-                    f"*Consejos:*\n"
-                    f"• Usa la misma casa ({disparo.get('casa')})\n"
-                    f"• Usa el mismo aro ({disparo.get('aro')})\n"
-                    f"• Usa 3 flechas\n\n"
+                    f"`{casa_usuario}🧹{disparo.get('aro')}⬆️⬇️➡️`\n\n"
                     f"🛡️ *Intenta de nuevo con el mismo disparo:*",
                     parse_mode="Markdown"
                 )
@@ -559,6 +605,19 @@ async def practicar_guardian(update, context):
     query = update.callback_query
     await query.answer()
     
+    user_id = update.effective_user.id
+
+    # Obtener la casa del usuario desde la base de datos
+    conn = sqlite3.connect('quidditch.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT casa FROM usuarios WHERE id_telegram = ?", (user_id,))
+    resultado = cursor.fetchone()
+    conn.close()
+    casa_usuario = resultado[0] if resultado else "❤️"
+
+    # Guardar la casa del usuario
+    context.user_data['casa_usuario'] = casa_usuario
+    
     # Guardar que el usuario está en práctica de guardián
     context.user_data['practica_activa'] = 'guardian'
     context.user_data['guardian_aciertos'] = 0
@@ -568,6 +627,10 @@ async def practicar_guardian(update, context):
     
     keyboard = [[InlineKeyboardButton("❌ Salir de práctica", callback_data="salir_practica")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
+
+    # Mostrar la casa que debe usar
+    casa_emoji = casa_usuario
+    casa_nombre = "Galkin" if casa_emoji == "❤️" else "Darfor" if casa_emoji == "💜" else "Olsson"
     
     await query.edit_message_text(
         "🟡 *PRÁCTICA DE GUARDIÁN* 🟡\n\n"
