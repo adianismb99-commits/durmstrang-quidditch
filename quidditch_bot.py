@@ -276,6 +276,27 @@ async def manejar_mensajes(update, context):
         if context.user_data.get('guardian_esperando_defensa'):
             disparo = context.user_data.get('disparo_actual', {})
             defensa_correcta = context.user_data.get('defensa_correcta', '')
+
+                    # Defendiendo disparo actual
+            if context.user_data.get('guardian_esperando_defensa'):
+                disparo = context.user_data.get('disparo_actual', {})
+                defensa_correcta = context.user_data.get('defensa_correcta', '')
+            
+                # ========== DIAGNÓSTICO ==========
+                await update.message.reply_text(
+                    f"🔍 *DIAGNÓSTICO - LO QUE RECIBÍ:*\n"
+                    f"`{mensaje}`\n\n"
+                    f"*Contenido del mensaje (caracter a caracter):*\n"
+                    f"`{list(mensaje)}`\n\n"
+                    f"*Lo que esperaba:*\n"
+                    f"Defensa correcta: `{disparo.get('casa')}🧹{disparo.get('aro')}{defensa_correcta}`\n\n"
+                    f"*Tu casa debería ser:* {casa_usuario}\n"
+                    f"*Aro del disparo:* {disparo.get('aro')}\n\n"
+                    f"📝 *Escribe exactamente:*\n"
+                    f"`{casa_usuario}🧹{disparo.get('aro')}{defensa_correcta}`",
+                    parse_mode="Markdown"
+                )
+                return  # Salimos para no procesar más
             
             # ========== EXTRAER FLECHAS (MÚLTIPLES VARIANTES) ==========
             flechas_map = {
@@ -354,10 +375,10 @@ async def manejar_mensajes(update, context):
             else:
                 # Mensaje de error con recordatorios
                 errores = []
+                if casa_usada != casa_usuario:
+                    errores.append(f"• Usa el emblema de tu casa {casa_usuario}")
                 if not tiene_escoba:
                     errores.append("• Falta la escoba `🧹`")
-                if casa_usada != casa_usuario:
-                    errores.append(f"• Usa tu casa {casa_usuario}")
                 if aro_usado != disparo.get('aro'):
                     errores.append(f"• Usa el mismo aro del disparo ({disparo.get('aro')})")
                 if len(flechas_str) != 3:
