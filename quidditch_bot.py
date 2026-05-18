@@ -250,14 +250,16 @@ async def manejar_mensajes(update, context):
                 context.user_data['disparo_actual'] = {'casa': casa, 'aro': aro, 'numeros': numeros}
                 context.user_data['defensa_correcta'] = ''.join([defensa_numero(n) for n in numeros])
                 
-                # Calcular flechas guía
-                flechas_guia = ' '.join([f"{n}→{defensa_numero(n)}" for n in numeros])
+                # Mostrar tabla de conversión completa
+                tabla = "• (2️⃣5️⃣1️⃣) → 🧹⬅️\n"
+                        "• (8️⃣9️⃣3️⃣) → 🧹⬆️\n"
+                        "• (7️⃣4️⃣6️⃣) → 🧹➡️\n\n"
                 
                 await update.message.reply_text(
                     f"⚡ *¡PRIMER DISPARO!* ⚡\n\n"
                     f"`{casa}🏉{aro}{numeros}`\n\n"
-                    f"📊 *Guía de conversión:*\n"
-                    f"`{flechas_guia}`\n\n"
+                    f"📊 *TABLA DE CONVERSIÓN:*\n"
+                    f"`{tabla}`\n\n"
                     f"📝 *Formato de defensa:*\n"
                     f"`{casa_usuario}🧹{aro}⬆️⬇️➡️`\n\n"
                     f"🛡️ *Escribe tu defensa (usa solo flechas):*",
@@ -277,20 +279,29 @@ async def manejar_mensajes(update, context):
             disparo = context.user_data.get('disparo_actual', {})
             defensa_correcta = context.user_data.get('defensa_correcta', '')
             
-            # Extraer flechas del mensaje (aceptando múltiples variantes)
-            flechas_encontradas = re.findall(r'[⬆️⬇️➡️⬅️]', mensaje)
+            # ========== EXTRAER FLECHAS (MÚLTIPLES VARIANTES) ==========
+            flechas_map = {
+                '⬆️': '⬆️', '⬆': '⬆️', '↑': '⬆️',
+                '⬇️': '⬇️', '⬇': '⬇️', '↓': '⬇️',
+                '➡️': '➡️', '➡': '➡️', '→': '➡️',
+                '⬅️': '⬅️', '⬅': '⬅️', '←': '⬅️'
+            }
+            flechas_encontradas = []
+            for char in mensaje:
+                if char in flechas_map:
+                    flechas_encontradas.append(flechas_map[char])
             flechas_str = ''.join(flechas_encontradas)
             
-            # Extraer aro del mensaje
+            # Extraer aro del mensaje (aceptando múltiples variantes)
             aro_usado = None
-            if '🅰' in mensaje or '🅰️' in mensaje or 'A' in mensaje or '🇦' in mensaje:
+            if '🅰' in mensaje or '🅰️' in mensaje or 'A' in mensaje:
                 aro_usado = '🅰️'
-            elif '🅱' in mensaje or '🅱️' in mensaje or 'B' in mensaje or '🇧' in mensaje:
+            elif '🅱' in mensaje or '🅱️' in mensaje or 'B' in mensaje:
                 aro_usado = '🅱️'
-            elif '🅾' in mensaje or '🅾️' in mensaje or 'O' in mensaje or '🇴' in mensaje:
+            elif '🅾' in mensaje or '🅾️' in mensaje or 'O' in mensaje:
                 aro_usado = '🅾️'
             
-            # Verificar que se usó la casa correcta del usuario
+            # Verificar que se usó la casa correcta del usuario (el emblema corazón)
             casa_usada = None
             if casa_usuario == '❤️' and '❤️' in mensaje:
                 casa_usada = '❤️'
@@ -299,7 +310,6 @@ async def manejar_mensajes(update, context):
             elif casa_usuario == '💚' and '💚' in mensaje:
                 casa_usada = '💚'
             
-            # Verificar que se usó la escoba
             tiene_escoba = '🧹' in mensaje
             
             # Validar defensa
@@ -319,14 +329,11 @@ async def manejar_mensajes(update, context):
                     fallos = context.user_data.get('guardian_fallos', 0) + 1
                     context.user_data['guardian_fallos'] = fallos
                     
-                    # Calcular flechas correctas para mostrar
-                    flechas_correctas = ' '.join([f"{disparo.get('numeros')[i]}→{defensa_correcta[i]}" for i in range(3)])
-                    
                     await update.message.reply_text(
                         f"❌ *¡DEFENSA FALLIDA!*\n\n"
                         f"Disparo: {disparo.get('casa')}🏉{disparo.get('aro')}{disparo.get('numeros')}\n"
                         f"Tu defensa: {casa_usada}🧹{aro_usado}{flechas_str}\n"
-                        f"Conversión correcta: {flechas_correctas}\n\n"
+                        f"*Defensa correcta:* `{disparo.get('casa')}🧹{disparo.get('aro')}{defensa_correcta}`\n\n"
                         f"📊 *Aciertos:* {context.user_data.get('guardian_aciertos', 0)} | *Fallos:* {fallos}",
                         parse_mode="Markdown"
                     )
@@ -336,13 +343,13 @@ async def manejar_mensajes(update, context):
                 context.user_data['disparo_actual'] = {'casa': casa, 'aro': aro, 'numeros': numeros}
                 context.user_data['defensa_correcta'] = ''.join([defensa_numero(n) for n in numeros])
                 
-                flechas_guia = ' '.join([f"{n}→{defensa_numero(n)}" for n in numeros])
+                tabla = "1→⬅️ 2→⬅️ 3→⬆️ 4→➡️ 5→⬅️ 6→➡️ 7→➡️ 8→⬆️ 9→⬆️"
                 
                 await update.message.reply_text(
                     f"🔄 *NUEVO DISPARO:*\n\n"
                     f"`{casa}🏉{aro}{numeros}`\n\n"
-                    f"📊 *Guía de conversión:*\n"
-                    f"`{flechas_guia}`\n\n"
+                    f"📊 *TABLA DE CONVERSIÓN:*\n"
+                    f"`{tabla}`\n\n"
                     f"🛡️ *Escribe tu defensa (usa tu casa {casa_usuario} y escoba 🧹):*",
                     parse_mode="Markdown"
                 )
@@ -360,10 +367,15 @@ async def manejar_mensajes(update, context):
                 
                 recordatorio = "\n".join(errores)
                 
+                # Mostrar tabla de conversión para ayudar
+                tabla = "1→⬅️ 2→⬅️ 3→⬆️ 4→➡️ 5→⬅️ 6→➡️ 7→➡️ 8→⬆️ 9→⬆️"
+                
                 await update.message.reply_text(
                     f"❌ *Formato incorrecto.*\n\n"
                     f"📝 *Recordatorio:*\n"
                     f"{recordatorio}\n\n"
+                    f"📊 *TABLA DE CONVERSIÓN:*\n"
+                    f"`{tabla}`\n\n"
                     f"📝 *Formato correcto:*\n"
                     f"`{casa_usuario}🧹{disparo.get('aro')}⬆️⬇️➡️`\n\n"
                     f"🛡️ *Intenta de nuevo con el mismo disparo:*",
