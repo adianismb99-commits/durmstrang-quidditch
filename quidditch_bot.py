@@ -104,41 +104,95 @@ async def manejar_mensajes(update, context):
         if mensaje.lower() == 'salir':
             context.user_data['practica_activa'] = None
             context.user_data['pases_cazador'] = 0
-            await update.message.reply_text("✅ Práctica de Cazador finalizada.")
+            await update.message.reply_text("✅ Práctica de Cazador finalizada. Usa /practicar para volver.")
             return
         
+        # Inicializar contador de pases si no existe
         if 'pases_cazador' not in context.user_data:
             context.user_data['pases_cazador'] = 0
             context.user_data['pases_realizados'] = []
         
+        # Verificar si es un pase (formato: [Casa]🏉@usuario)
         if '🏉' in mensaje and '@' in mensaje:
             context.user_data['pases_cazador'] += 1
-            pases = context.user_data['pases_cazador']
+            context.user_data['pases_realizados'].append(mensaje)
+            pases_actuales = context.user_data['pases_cazador']
             
-            if pases < 4:
-                await update.message.reply_text(f"✅ Pase correcto. Llevas {pases}/4 pases.")
-            elif 4 <= pases <= 10:
-                await update.message.reply_text(f"✅ Pase correcto. Llevas {pases} pases.\n\n🎯 ¡Ya puedes disparar!")
+            if pases_actuales < 4:
+                await update.message.reply_text(
+                    f"✅ Pase correcto. Llevas {pases_actuales}/4 pases.\n"
+                    f"Sigue pasando la Quaffle. (máximo 10 pases)"
+                )
+            elif 4 <= pases_actuales <= 10:
+                await update.message.reply_text(
+                    f"✅ Pase correcto. Llevas {pases_actuales} pases.\n\n"
+                    f"🎯 ¡Ya puedes disparar! Usa el formato:\n"
+                    f"`❤️🏉🅰️123`\n\n"
+                    f"(Recuerda: 3 números del 1 al 9)"
+                )
             else:
-                await update.message.reply_text(f"❌ Demasiados pases ({pases}). Máximo 10. Práctica reiniciada.")
+                await update.message.reply_text(
+                    f"❌ Demasiados pases ({pases_actuales}). Máximo 10.\n"
+                    f"Pierdes la Quaffle. Práctica reiniciada."
+                )
                 context.user_data['pases_cazador'] = 0
+                context.user_data['pases_realizados'] = []
         
+        # Verificar si es un disparo (formato: [Casa]🏉[Aro][3 números])
         elif '🏉' in mensaje and ('🅰️' in mensaje or '🅱️' in mensaje or '🅾️' in mensaje):
             pases = context.user_data.get('pases_cazador', 0)
-            
+        
             if pases < 4:
-                await update.message.reply_text(f"❌ No puedes disparar. Llevas {pases}/4 pases.")
+                await update.message.reply_text(
+                    f"❌ No puedes disparar todavía. Llevas solo {pases}/4 pases.\n"
+                    f"Completa los pases mínimos primero."
+                )
             else:
+                # Extraer números (acepta 1,2,3 en lugar de 1️⃣,2️⃣,3️⃣)
                 numeros = re.findall(r'[1-9]', mensaje)
+            
                 if len(numeros) == 3:
                     flechas = ''.join([defensa_numero(n) for n in numeros])
-                    await update.message.reply_text(f"🎯 ¡Disparo! Defensa correcta: {flechas}\n\n✅ ¡GOL! +10 puntos")
+                
+                    # Detectar qué aro usó
+                    aro = None
+                    if '🅰️' in mensaje:
+                        aro = '🅰️'
+                    elif '🅱️' in mensaje:
+                        aro = '🅱️'
+                    elif '🅾️' in mensaje:
+                        aro = '🅾️'
+                
+                    # Detectar qué casa usó
+                    casa = "❤️" if '❤️' in mensaje else "💜" if '💜' in mensaje else "💚" if '💚' in mensaje else "?"
+                
+                    await update.message.reply_text(
+                        f"🎯 ¡Disparo realizado!\n"
+                        f"Casa: {casa} | Aro: {aro}\n"
+                        f"Números: {''.join(numeros)}\n\n"
+                        f"🟡 Defensa del guardián: {flechas}\n\n"
+                        f"✅ ¡GOL! +10 puntos (en práctica es un simulacro)"
+                    )
+                
+                    # Reiniciar práctica después del gol
                     context.user_data['pases_cazador'] = 0
+                    context.user_data['pases_realizados'] = []
                 else:
-                    await update.message.reply_text(f"❌ Disparo inválido. Usa 3 números.")
+                    await update.message.reply_text(
+                        f"❌ Disparo inválido. Debes usar EXACTAMENTE 3 números (1-9).\n"
+                        f"Ejemplo: `❤️🏉🅰️123`\n"
+                        f"Tú usaste {len(numeros)} números: {''.join(numeros) if numeros else 'ninguno'}"
+                    )
         
         else:
-            await update.message.reply_text("❌ Formato no reconocido. Usa '❤️🏉@usuario' o '❤️🏉🅰️123'")
+            await update.message.reply_text(
+                f"❌ Formato no reconocido.\n\n"
+                f"📝 **Formato de pase:**\n"
+                f"`❤️🏉@cazador2`\n\n"
+                f"🎯 **Formato de disparo:**\n"
+                f"`❤️🏉🅰️123`\n\n"
+                f"Escribe 'salir' para terminar."
+            )
     
     elif context.user_data.get('esperando_casa'):
         casa = update.message.text
