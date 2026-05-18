@@ -82,30 +82,27 @@ async def start(update, context):
     user_id = update.effective_user.id
     nombre = update.effective_user.first_name
     
-    # Buscar en Supabase
-    response = supabase.table('usuarios').select('*').eq('id_telegram', user_id).execute()
-    
-    if not response.data:
-        # Usuario nuevo
-        await update.message.reply_text(
-            f"✨ ¡Bienvenido {nombre} al Quidditch Emoji Bot! ✨\n\n"
-            "Para comenzar, necesitas crear una cuenta.\n\n"
-            "Comando: /crear_cuenta\n\n"
-            "Serás parte de una de las tres casas mágicas: Galkin ❤️, Darfor 💜 u Olsson 💚"
-        )
-    else:
-        # Usuario existente
-        usuario = response.data[0]
-        await update.message.reply_text(
-            f"¡Bienvenido de vuelta {usuario['nombre']}!\n"
-            f"Casa: {usuario['casa']}\n"
-            f"Cargo: {usuario['cargo']}\n\n"
-            "¿Qué deseas hacer?\n"
-            "/practicar - Entrenar una posición\n"
-            "/jugar - Iniciar una partida\n"
-            "/aprender - Ver reglas del juego"
-        )
-
+    try:
+        response = supabase.table('usuarios').select('*').eq('id_telegram', user_id).execute()
+        
+        if not response.data:
+            await update.message.reply_text(
+                f"✨ ¡Bienvenido {nombre}! ✨\n\n"
+                "Para comenzar, crea una cuenta con /crear_cuenta"
+            )
+        else:
+            usuario = response.data[0]
+            await update.message.reply_text(
+                f"¡Bienvenido de vuelta {usuario['nombre']}!\n"
+                f"Casa: {usuario['casa']}\n"
+                f"Cargo: {usuario['cargo']}\n\n"
+                "¿Qué deseas hacer?\n"
+                "/practicar - Entrenar\n"
+                "/jugar - Partidas\n"
+                "/aprender - Reglas"
+            )
+    except Exception as e:
+        await update.message.reply_text(f"❌ Error: {e}\n\nContacta al administrador.")
 async def crear_cuenta(update, context):
     # Aquí implementaremos el registro
     await update.message.reply_text(
