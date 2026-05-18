@@ -4,6 +4,7 @@ import asyncio
 import threading
 import re
 import random
+import unicodedata
 from datetime import datetime
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
@@ -56,14 +57,11 @@ def defensa_numero(numero):
     }
     return tabla.get(numero, '❌')
 
-#=== DISPARO ALEATORIO ===
-def generar_disparo_aleatorio():
-    casas = ["❤️", "💜", "💚"]
+def generar_disparo_aleatorio(casa_usuario):
     aros = ["🅰️", "🅱️", "🅾️"]
-    casa = random.choice(casas)
     aro = random.choice(aros)
     numeros = ''.join([str(random.randint(1, 9)) for _ in range(3)])
-    return casa, aro, numeros
+    return casa_usuario, aro, numeros
 
 #=== GENERAR SECUENCIA DE SNITCH ===
 
@@ -246,12 +244,12 @@ async def manejar_mensajes(update, context):
                 context.user_data['guardian_esperando_defensa'] = True
                 
                 # Generar primer disparo
-                casa, aro, numeros = generar_disparo_aleatorio()
+                casa, aro, numeros = generar_disparo_aleatorio(casa_usuario)
                 context.user_data['disparo_actual'] = {'casa': casa, 'aro': aro, 'numeros': numeros}
                 context.user_data['defensa_correcta'] = ''.join([defensa_numero(n) for n in numeros])
                 
                 # Mostrar tabla de conversión completa
-                tabla = "(2️⃣5️⃣1️⃣) → 🧹⬅️\n(8️⃣9️⃣3️⃣) → 🧹⬆️\n(7️⃣4️⃣6️⃣) → 🧹➡️"
+                tabla = "(2️⃣5️⃣1️⃣) → ⬅️\n(8️⃣9️⃣3️⃣) → ⬆️\n(7️⃣4️⃣6️⃣) → ➡️"
                       
                 await update.message.reply_text(
                     f"⚡ *¡PRIMER DISPARO!* ⚡\n\n"
@@ -358,11 +356,11 @@ async def manejar_mensajes(update, context):
                     )
                 
                 # Generar nuevo disparo
-                casa, aro, numeros = generar_disparo_aleatorio()
+                casa, aro, numeros = generar_disparo_aleatorio(casa_usuario)
                 context.user_data['disparo_actual'] = {'casa': casa, 'aro': aro, 'numeros': numeros}
                 context.user_data['defensa_correcta'] = ''.join([defensa_numero(n) for n in numeros])
                 
-                tabla = "1→⬅️ 2→⬅️ 3→⬆️ 4→➡️ 5→⬅️ 6→➡️ 7→➡️ 8→⬆️ 9→⬆️"
+                tabla = "(2️⃣5️⃣1️⃣) → ⬅️\n(8️⃣9️⃣3️⃣) → ⬆️\n(7️⃣4️⃣6️⃣) → ➡️"
                 
                 await update.message.reply_text(
                     f"🔄 *NUEVO DISPARO:*\n\n"
@@ -387,7 +385,7 @@ async def manejar_mensajes(update, context):
                 recordatorio = "\n".join(errores)
                 
                 # Mostrar tabla de conversión para ayudar
-                tabla = "1→⬅️ 2→⬅️ 3→⬆️ 4→➡️ 5→⬅️ 6→➡️ 7→➡️ 8→⬆️ 9→⬆️"
+                tabla = "(2️⃣5️⃣1️⃣) → ⬅️\n(8️⃣9️⃣3️⃣) → ⬆️\n(7️⃣4️⃣6️⃣) → ➡️"
                 
                 await update.message.reply_text(
                     f"❌ *Formato incorrecto.*\n\n"
