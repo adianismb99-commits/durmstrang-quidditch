@@ -3,6 +3,7 @@ import sqlite3
 import asyncio
 import threading
 import re
+import random
 from datetime import datetime
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
@@ -54,6 +55,15 @@ def defensa_numero(numero):
         '7': '➡️', '8': '⬆️', '9': '⬆️'
     }
     return tabla.get(numero, '❌')
+
+#=== DISPARO ALEATORIO ===
+def generar_disparo_aleatorio():
+    casas = ["❤️", "💜", "💚"]
+    aros = ["🅰️", "🅱️", "🅾️"]
+    casa = random.choice(casas)
+    aro = random.choice(aros)
+    numeros = ''.join([str(random.randint(1, 9)) for _ in range(3)])
+    return casa, aro, numeros
 
 # ============= COMANDOS =============
 async def start(update, context):
@@ -197,6 +207,98 @@ async def manejar_mensajes(update, context):
                 f"🎯 **Formato de disparo:**\n"
                 f"`❤️🏉🅰️123`\n\n"
                 f"Escribe 'salir' para terminar."
+            )
+    
+    elif practica == 'guardian':
+        mensaje = update.message.text
+        
+        if mensaje.lower() == 'salir':
+            context.user_data['practica_activa'] = None
+            context.user_data['guardian_esperando_defensa'] = False
+            await update.message.reply_text("✅ Práctica de Guardián finalizada. Usa /practicar para volver.")
+            return
+        
+        if not context.user_data.get('guardian_esperando_defensa'):
+            await update.message.reply_text("⏳ Espera el disparo para defender.")
+            return
+        
+        # Verificar formato de defensa
+        disparo = context.user_data.get('disparo_actual', {})
+        defensa_correcta = context.user_data.get('defensa_correcta', '')
+        
+        # Extraer flechas del mensaje
+        flechas = re.findall(r'[⬆️⬇️➡️⬅️]', mensaje)
+        flechas_str = ''.join(flechas)
+        
+        # Extraer aro del mensaje
+        aro_usado = None
+        if '🅰️' in mensaje or '🅰' in mensaje:
+            aro_usado = '🅰️'
+        elif '🅱️' in mensaje or '🅱' in mensaje:
+            aro_usado = '🅱️'
+        elif '🅾️' in mensaje or '🅾' in mensaje:
+            aro_usado = '🅾️'
+        
+        # Extraer casa del mensaje
+        casa_usada = "❤️" if '❤️' in mensaje else "💜" if '💜' in mensaje else "💚" if '💚' in mensaje else None
+        
+        if len(flechas) == 3 and aro_usado == disparo.get('aro') and casa_usada == disparo.get('casa'):
+            if flechas_str == defensa_correcta:
+                await update.message.reply_text(
+                    f"✅ *¡DEFENSA EXITOSA!*\n\n"
+                    f"Disparo: {disparo.get('casa')}🏉{disparo.get('aro')}{disparo.get('numeros')}\n"
+                    f"Tu defensa: {casa_usada}🧹{aro_usado}{flechas_str}\n\n"
+                    f"⚡ *¡El gol no entra!*\n\n"
+                    f"🔄 Nuevo disparo en camino...",
+                    parse_mode="Markdown"
+                )
+                # Generar nuevo disparo
+                casa, aro, numeros = generar_disparo_aleatorio()
+                context.user_data['disparo_actual'] = {'casa': casa, 'aro': aro, 'numeros': numeros}
+                context.user_data['defensa_correcta'] = ''.join([defensa_numero(n) for n in numeros])
+                
+                await update.message.reply_text(
+                    f"⚡ *NUEVO DISPARO:*\n"
+                    f"{casa}🏉{aro}{numeros}\n\n"
+                    f"📝 *Formato de defensa:*\n"
+                    f"`{casa}🧹{aro}⬆️⬇️➡️`\n\n"
+                    f"🛡️ *Escribe tu defensa*",
+                    parse_mode="Markdown"
+                )
+            else:
+                await update.message.reply_text(
+                    f"❌ *¡DEFENSA FALLIDA!*\n\n"
+                    f"Disparo: {disparo.get('casa')}🏉{disparo.get('aro')}{disparo.get('numeros')}\n"
+                    f"Tu defensa: {casa_usada}🧹{aro_usado}{flechas_str}\n"
+                    f"Defensa correcta: {disparo.get('casa')}🧹{disparo.get('aro')}{defensa_correcta}\n\n"
+                    f"⚡ *¡GOL! +100 puntos para el otro equipo*\n\n"
+                    f"🔄 Nuevo disparo en camino...",
+                    parse_mode="Markdown"
+                )
+                # Generar nuevo disparo
+                casa, aro, numeros = generar_disparo_aleatorio()
+                context.user_data['disparo_actual'] = {'casa': casa, 'aro': aro, 'numeros': numeros}
+                context.user_data['defensa_correcta'] = ''.join([defensa_numero(n) for n in numeros])
+                
+                await update.message.reply_text(
+                    f"⚡ *NUEVO DISPARO:*\n"
+                    f"{casa}🏉{aro}{numeros}\n\n"
+                    f"📝 *Formato de defensa:*\n"
+                    f"`{casa}🧹{aro}⬆️⬇️➡️`\n\n"
+                    f"🛡️ *Escribe tu defensa*",
+                    parse_mode="Markdown"
+                )
+        else:
+            await update.message.reply_text(
+                f"❌ *Formato incorrecto.*\n\n"
+                f"📝 *Formato de defensa:*\n"
+                f"`❤️🧹🅰️⬆️⬅️➡️`\n\n"
+                f"*Consejos:*\n"
+                f"• Usa la misma casa del disparo\n"
+                f"• Usa el mismo aro del disparo\n"
+                f"• Usa 3 flechas (⬆️⬇️➡️⬅️)\n\n"
+                f"Intenta de nuevo:",
+                parse_mode="Markdown"
             )
     
     elif context.user_data.get('esperando_casa'):
@@ -424,8 +526,39 @@ async def practicar_cazador(update, context):
 async def practicar_guardian(update, context):
     query = update.callback_query
     await query.answer()
+    
+    # Guardar que el usuario está en práctica de guardián
     context.user_data['practica_activa'] = 'guardian'
-    await query.edit_message_text("🟡 *PRÁCTICA DE GUARDIÁN*\n\nEscribe 'salir' para terminar.", parse_mode="Markdown")
+    context.user_data['guardian_esperando_defensa'] = False
+    
+    keyboard = [[InlineKeyboardButton("❌ Salir de práctica", callback_data="salir_practica")]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    # Generar primer disparo
+    casa, aro, numeros = generar_disparo_aleatorio()
+    context.user_data['disparo_actual'] = {'casa': casa, 'aro': aro, 'numeros': numeros}
+    
+    # Calcular defensa correcta
+    flechas_correctas = ''.join([defensa_numero(n) for n in numeros])
+    context.user_data['defensa_correcta'] = flechas_correctas
+    
+    await query.edit_message_text(
+        "🟡 *PRÁCTICA DE GUARDIÁN* 🟡\n\n"
+        f"⚡ *DISPARO:*\n"
+        f"{casa}🏉{aro}{numeros}\n\n"
+        "📊 *TABLA DE NÚMEROS A FLECHAS:*\n"
+        "1⬅️ 2⬅️ 3⬆️ 4➡️ 5⬅️ 6➡️ 7➡️ 8⬆️ 9⬆️\n\n"
+        "📝 *Formato de defensa:*\n"
+        f"`{casa}🧹{aro}⬆️⬇️➡️`\n\n"
+        "🛡️ *Escribe tu defensa con el formato:*\n"
+        "`[Casa]🧹[Aro][3 flechas]`\n\n"
+        "💡 *Ejemplo:* `❤️🧹🅰️⬆️⬅️➡️`\n\n"
+        "⏱️ *Tienes 5 segundos para responder.*\n"
+        "⚡ *Escribe 'salir' para terminar.*",
+        reply_markup=reply_markup,
+        parse_mode="Markdown"
+    )
+    context.user_data['guardian_esperando_defensa'] = True
 
 async def practicar_golpeador(update, context):
     query = update.callback_query
