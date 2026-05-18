@@ -1,3 +1,3 @@
 python-telegram-bot==21.10
 Flask==3.0.0
-supabase
+pip==26.1.1

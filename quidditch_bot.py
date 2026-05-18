@@ -1,61 +1,38 @@
-import json
 import os
 import sqlite3
 import asyncio
 import threading
+import re
 from datetime import datetime
-from telegram import Bot
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
-from telegram import ReplyKeyboardMarkup, KeyboardButton
 from flask import Flask
-from supabase import create_client, Client
-from dotenv import load_dotenv
-load_dotenv()  # <-- Esto lee el archivo .env y crea las variables de entorno
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise Exception("❌ Faltan variables SUPABASE_URL o SUPABASE_KEY")
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-def defensa_numero(numero):
-    """Convierte un número emoji a su flecha correspondiente"""
-    tabla = {
-        '1️⃣': '⬅️', '2️⃣': '⬅️', '3️⃣': '⬆️',
-        '4️⃣': '➡️', '5️⃣': '⬅️', '6️⃣': '➡️',
-        '7️⃣': '➡️', '8️⃣': '⬆️', '9️⃣': '⬆️'
-    }
-    return tabla.get(numero, '❌')
+# === CONFIGURACION ===
+TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "8840107743:AAFNg1W9aSNMH_4vxYyPUfFFHgsCfYMsJZA")
 
 # === SERVICIO WEB PARA KEEP-ALIVE ===
-app = Flask(__name__)
+flask_app = Flask(__name__)
 
-@app.route('/')
+@flask_app.route('/')
 def health_check():
-    # Esta es la respuesta simple que cron-job.org verá
     return "OK", 200
 
 def run_web():
-    # Ejecuta el pequeño servidor web en el puerto 10000
-    app.run(host='0.0.0.0', port=10000)
-
-# === CONFIGURACION ===
-# Toma el token de las variables de entorno del sistema.
-# Es mucho más seguro y necesario para Render.
-TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "8840107743:AAFNg1W9aSNMH_4vxYyPUfFFHgsCfYMsJZA")
-if not TOKEN:
-    TOKEN = "8840107743:AAFNg1W9aSNMH_4vxYyPUfFFHgsCfYMsJZA"
+    import os
+    port = int(os.environ.get('PORT', 10000))
+    for p in [port, 10001, 10002, 10003]:
+        try:
+            flask_app.run(host='0.0.0.0', port=p, use_reloader=False)
+            break
+        except OSError:
+            print(f"Puerto {p} ocupado, intentando con el siguiente...")
+            continue
 
 # ============= BASE DE DATOS =============
-
 def iniciar_bd():
     conn = sqlite3.connect('quidditch.db')
     cursor = conn.cursor()
-    
-    # Tabla de usuarios
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS usuarios (
             id_telegram INTEGER PRIMARY KEY,
@@ -66,9 +43,17 @@ def iniciar_bd():
             fecha_registro TIMESTAMP
         )
     ''')
-    
     conn.commit()
     conn.close()
+
+# ============= FUNCIONES AUXILIARES =============
+def defensa_numero(numero):
+    tabla = {
+        '1': '⬅️', '2': '⬅️', '3': '⬆️',
+        '4': '➡️', '5': '⬅️', '6': '➡️',
+        '7': '➡️', '8': '⬆️', '9': '⬆️'
+    }
+    return tabla.get(numero, '❌')
 
 # ============= COMANDOS =============
 async def start(update, context):
@@ -77,13 +62,11 @@ async def start(update, context):
     
     conn = sqlite3.connect('quidditch.db')
     cursor = conn.cursor()
-    
     cursor.execute("SELECT * FROM usuarios WHERE id_telegram = ?", (user_id,))
     usuario = cursor.fetchone()
     conn.close()
     
     if usuario is None:
-        # Usuario nuevo: pedir crear cuenta
         await update.message.reply_text(
             f"✨ ¡Bienvenido {nombre} al Quidditch Emoji Bot! ✨\n\n"
             "Para comenzar, necesitas crear una cuenta.\n\n"
@@ -91,7 +74,6 @@ async def start(update, context):
             "Serás parte de una de las tres casas mágicas: Galkin ❤️, Darfor 💜 u Olsson 💚"
         )
     else:
-        # Usuario existente
         await update.message.reply_text(
             f"¡Bienvenido de vuelta {usuario[1]}!\n"
             f"Casa: {usuario[2]}\n"
@@ -103,7 +85,6 @@ async def start(update, context):
         )
 
 async def crear_cuenta(update, context):
-    # Aquí implementaremos el registro
     await update.message.reply_text(
         "Vamos a crear tu cuenta.\n\n"
         "Primero, elige tu casa:\n"
@@ -115,7 +96,6 @@ async def crear_cuenta(update, context):
     context.user_data['esperando_casa'] = True
 
 async def manejar_mensajes(update, context):
-    # Verificar si el usuario está en modo práctica
     practica = context.user_data.get('practica_activa')
     
     if practica == 'cazador':
@@ -132,7 +112,7 @@ async def manejar_mensajes(update, context):
             context.user_data['pases_cazador'] = 0
             context.user_data['pases_realizados'] = []
         
-        # Verificar si es un pase
+        # Verificar si es un pase (formato: [Casa]🏉@usuario)
         if '🏉' in mensaje and '@' in mensaje:
             context.user_data['pases_cazador'] += 1
             context.user_data['pases_realizados'].append(mensaje)
@@ -140,14 +120,14 @@ async def manejar_mensajes(update, context):
             
             if pases_actuales < 4:
                 await update.message.reply_text(
-                    f"✅ Pase correcto. Llevas {pases_actuales}/4 pases.\n"
+                    f"✅ Pase correcto. Llevas {pases_actuales}/4 pases minimos para disparo.\n"
                     f"Sigue pasando la Quaffle. (máximo 10 pases)"
                 )
             elif 4 <= pases_actuales <= 10:
                 await update.message.reply_text(
                     f"✅ Pase correcto. Llevas {pases_actuales} pases.\n\n"
                     f"🎯 ¡Ya puedes disparar! Usa el formato:\n"
-                    f"`❤️🏉🅰️1️⃣2️⃣3️⃣`\n\n"
+                    f"`❤️🏉🅰️123`\n\n"
                     f"(Recuerda: 3 números del 1 al 9)"
                 )
             else:
@@ -168,8 +148,8 @@ async def manejar_mensajes(update, context):
                     f"Completa los pases mínimos primero."
                 )
             else:
-                # Extraer los 3 números (cualquier orden, cualquier combinación)
-                numeros = [c for c in mensaje if c in ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣']]
+                # Extraer números (acepta 1,2,3 en lugar de 1️⃣,2️⃣,3️⃣)
+                numeros = re.findall(r'[1-9]', mensaje)
             
                 if len(numeros) == 3:
                     flechas = ''.join([defensa_numero(n) for n in numeros])
@@ -183,25 +163,24 @@ async def manejar_mensajes(update, context):
                     elif '🅾️' in mensaje:
                         aro = '🅾️'
                 
-                    # Detectar qué casa usó (opcional)
+                    # Detectar qué casa usó
                     casa = "❤️" if '❤️' in mensaje else "💜" if '💜' in mensaje else "💚" if '💚' in mensaje else "?"
                 
                     await update.message.reply_text(
                         f"🎯 ¡Disparo realizado!\n"
                         f"Casa: {casa} | Aro: {aro}\n"
-                        f"Secuencia de números: {''.join(numeros)}\n\n"
-                        f"🟡 El guardián debe defender con las flechas:\n"
-                        f"{flechas}\n\n"
-                        f"✅ ¡GOL! +10 puntos (en práctica es un simulacro)"
+                        f"Números: {''.join(numeros)}\n\n"
+                        f"🟡 Defensa del guardián: {flechas}\n\n"
+                        f"✅ ¡GOL! +100 puntos (en práctica es un simulacro)"
                     )
                 
-                    # Reiniciar la práctica después del gol
+                    # Reiniciar práctica después del gol
                     context.user_data['pases_cazador'] = 0
                     context.user_data['pases_realizados'] = []
                 else:
                     await update.message.reply_text(
-                        f"❌ Disparo inválido. Debes usar EXACTAMENTE 3 números.\n"
-                        f"Ejemplo: `❤️🏉🅰️1️⃣2️⃣3️⃣`\n"
+                        f"❌ Disparo inválido. Debes usar EXACTAMENTE 3 números (1-9).\n"
+                        f"Ejemplo: `❤️🏉🅰️123`\n"
                         f"Tú usaste {len(numeros)} números: {''.join(numeros) if numeros else 'ninguno'}"
                     )
         
@@ -211,36 +190,9 @@ async def manejar_mensajes(update, context):
                 f"📝 **Formato de pase:**\n"
                 f"`❤️🏉@cazador2`\n\n"
                 f"🎯 **Formato de disparo:**\n"
-                f"`❤️🏉🅰️1️⃣2️⃣3️⃣`\n\n"
+                f"`❤️🏉🅰️123`\n\n"
                 f"Escribe 'salir' para terminar."
             )
-    
-    elif practica == 'guardian':
-        mensaje = update.message.text
-        if mensaje.lower() == 'salir':
-            context.user_data['practica_activa'] = None
-            await update.message.reply_text("✅ Práctica de Guardián finalizada. Usa /practicar para volver.")
-            return
-        
-        await update.message.reply_text(f"🛡️ Defensa recibida: {mensaje}\n\n(Ejercicio de Guardián en desarrollo)")
-    
-    elif practica == 'golpeador':
-        mensaje = update.message.text
-        if mensaje.lower() == 'salir':
-            context.user_data['practica_activa'] = None
-            await update.message.reply_text("✅ Práctica de Golpeador finalizada. Usa /practicar para volver.")
-            return
-        
-        await update.message.reply_text(f"⚔️ Acción recibida: {mensaje}\n\n(Ejercicio de Golpeador en desarrollo)")
-    
-    elif practica == 'buscador':
-        mensaje = update.message.text
-        if mensaje.lower() == 'salir':
-            context.user_data['practica_activa'] = None
-            await update.message.reply_text("✅ Práctica de Buscador finalizada. Usa /practicar para volver.")
-            return
-        
-        await update.message.reply_text(f"🔍 Secuencia recibida: {mensaje}\n\n(Ejercicio de Buscador en desarrollo)")
     
     elif context.user_data.get('esperando_casa'):
         casa = update.message.text
@@ -262,10 +214,7 @@ async def manejar_mensajes(update, context):
                 f"Nombre: {nombre}\n"
                 f"Casa: {casa}\n"
                 f"Cargo: Estudiante\n\n"
-                "Ahora puedes usar:\n"
-                "/practicar - Entrenar\n"
-                "/jugar - Partidas\n"
-                "/aprender - Reglas"
+                "Ahora escribe /start para comenzar."
             )
             context.user_data['esperando_casa'] = False
         else:
@@ -276,143 +225,175 @@ async def manejar_mensajes(update, context):
 
 async def aprender(update, context):
     keyboard = [
-        [
-            InlineKeyboardButton("📜 Reglas generales", callback_data="aprender_general"),
-            InlineKeyboardButton("🔴 Cazador", callback_data="aprender_cazador")
-        ],
-        [
-            InlineKeyboardButton("🟡 Guardián", callback_data="aprender_guardian"),
-            InlineKeyboardButton("🟢 Golpeador", callback_data="aprender_golpeador")
-        ],
-        [
-            InlineKeyboardButton("🟣 Buscador", callback_data="aprender_buscador"),
-            InlineKeyboardButton("⚡ Práctica rápida", callback_data="aprender_practica")
-        ]
+        [InlineKeyboardButton("📜 Reglas generales", callback_data="aprender_general"), InlineKeyboardButton("🔴 Cazador", callback_data="aprender_cazador")],
+        [InlineKeyboardButton("🟡 Guardián", callback_data="aprender_guardian"), InlineKeyboardButton("🟢 Golpeador", callback_data="aprender_golpeador")],
+        [InlineKeyboardButton("🟣 Buscador", callback_data="aprender_buscador"), InlineKeyboardButton("⚡ Práctica rápida", callback_data="aprender_practica")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(
-        "📚 *CENTRO DE APRENDIZAJE* 📚\n\nElige una opción:",
+    await update.message.reply_text("📚 *CENTRO DE APRENDIZAJE*\n\nElige una opción:", reply_markup=reply_markup, parse_mode="Markdown")
+
+async def boton_aprender(update, context):
+    query = update.callback_query
+    await query.answer()
+    opcion = query.data
+
+    textos = {
+        "aprender_general": (
+            "🏉 *REGLAS GENERALES* 🏉\n\n"
+            "0. *Base:* Se sigan las normas generales del colegio durante el partido.\n\n"
+            "1. *Puntos:* El valor de la snitch es de 150, de un gol de 100 y de un golpe efectivo 50.\n\n"
+            "2. *Golpes efectivos:* 3 golpes efectivos a una misma persona lo saca del juego durante 5 minutos.\n\n"
+            "3. *Cambios:* Los cambios se realizan al acabar una ronda y solo el capitán está autorizado a hacer cambios o hablar durante el partido.\n\n"
+            "4. *Árbitro:* Solamente el árbitro está autorizado a detener el partido o mandar multimedia, para hablar con el árbitro se debe etiquetar a este en el partido una vez haya finalizado una ronda y solo puede ser el capitán, ya sea para corregir algún error o para un cambio.\n\n"
+            "5. *Suplentes:* Cada equipo podrá contar con un máximo de 4 suplentes.\n\n"
+            "6. *Participantes:* En caso de la ausencia de algún participante a la hora de comenzar el partido tendrán 2 minutos para decidir y realizar un cambio o el partido comenzará a pesar de que falte alguien.\n\n"
+            "7. *Default:* Un equipo titular que le falten 3 integrantes perderá por default, esto también ocurrirá en caso de que no se presenten al partido, el default dará al equipo contrario los puntos de las 3 snitch y el equipo que no se presentó se llevará una penalización de puntos y galeones para su casa.\n\n"
+            "8. *Amonestaciones:* El incumplimiento de alguna de las reglas puede ser penalizado de 3 formas, tarjeta amarilla de advertencia (amonestación leve), tarjeta roja de expulsión (amonestación fuerte), tarjeta negra de expulsión y pérdida de puntos (amonestación grave), un participante expulsado deja a su equipo con 1 de menos durante 10 minutos y no puede volver a jugar ese partido.\n\n"
+            "9. *Vacío legal:* En caso de vacío legal o inconsistencia de alguna regla o norma el árbitro tendrá potestad total para tomar la decisión que crea correspondiente."
+        ),
+        "aprender_cazador": (
+            "🏰💫🏰💫🏰💫🏰💫🏰💫🏰\n\n"
+            "*CAZADOR* 🏉\n\n"
+            "📌 *FUNCIÓN:* Los cazadores tendrán la tarea de pasarse la quaffle entre ellos y tirar a los aros para intentar anotar al contrario.\n\n"
+            "🔄 *FORMATO DE PASE:*\n"
+            "`[Emblema]🏉@cazador`\n"
+            "💡 *Ejemplo:* `💛🦡🏉@cazador`\n\n"
+            "🎯 *FORMATO DE DISPARO:*\n"
+            "`[Emblema]🏉[Aro][3 números]`\n"
+            "💡 *Ejemplo:* `💛🦡🏉🅱️3️⃣7️⃣1️⃣`\n\n"
+            "⚡ *PENALES:*\n"
+            "`[Emblema]🏉[Aro][6 números]`\n"
+            "💡 *Ejemplo:* `💜🐍🏉🅱️5️⃣2️⃣1️⃣7️⃣8️⃣4️⃣`\n\n"
+            "⭕ *REGLAS:*\n"
+            "• Estarán en juego un total de 3 cazadores con su respectivo suplente.\n"
+            "• Deben realizar un mínimo de 4 pases y un máximo de 10 sin omitir a ningún cazador antes de disparar a los aros.\n"
+            "• En caso de fallar en la utilización de cualquier emoji, el árbitro cantará penal para el equipo contrario que cometió el error, eligiendo también que cazador será el encargado de disparar.\n"
+            "• La omisión de alguno, el exceso o falta de pases harán que el equipo poseedor del balón pierda la quaffle y pase instantáneamente al guardián del equipo contrario el cuál tendrá la misión de pasarla a sus cazadores.\n\n"
+            "🏰💫🏰💫🏰💫🏰💫🏰💫🏰"
+        ),
+        "aprender_guardian": (
+            "🏰💫🏰💫🏰💫🏰💫🏰💫🏰\n\n"
+            "*GUARDIÁN* 🧹\n\n"
+            "📌 *FUNCIÓN:* El guardián debe dar todo de sí y tener la habilidad suficiente para ser capaz de ir hacia cualquiera de los tres aros y defenderlo evitando el tiro.\n\n"
+            "📊 *TABLA PARA DEFENDER DISPAROS:*\n"
+            "• (2️⃣5️⃣1️⃣) → 🧹⬅️\n"
+            "• (8️⃣9️⃣3️⃣) → 🧹⬆️\n"
+            "• (7️⃣4️⃣6️⃣) → 🧹➡️\n\n"
+            "📝 *NOTA:* Esta tabla el Guardián oficial se la debe aprender para el torneo de quidditch.\n\n"
+            "🎯 *EJEMPLO DE DISPARO:*\n"
+            "`💙🦅🏉🅰️3️⃣7️⃣1️⃣`\n\n"
+            "🛡️ *DEFENSA DEL GUARDIÁN:*\n"
+            "`💙🦅🧹🅰️⬆️➡️⬅️`\n\n"
+            "⚡ *PENALES:*\n"
+            "Un cazador realizará un disparo a cualquiera de los aros de 6 combinaciones de números.\n\n"
+            "💡 *Ejemplo de disparo de penal:*\n"
+            "`💙🦅🏉🅾️4️⃣2️⃣8️⃣1️⃣9️⃣7️⃣`\n\n"
+            "🛡️ *Defensa para penal:*\n"
+            "`💙🦅🧹🅾️➡️⬅️⬆️⬅️⬆️➡️`\n\n"
+            "⭕ *REGLAS:*\n"
+            "• Cualquier fallo tanto en combinación como en emojis a la hora de defender será considerado tiro efectivo.\n"
+            "• Tendrá un máximo de 5 segundos para efectuar la correcta defensa.\n\n"
+            "🏰💫🏰💫🏰💫🏰💫🏰💫🏰"
+        ),
+        "aprender_golpeador": (
+            "🏰💫🏰💫🏰💫🏰💫🏰💫🏰\n\n"
+            "*GOLPEADOR* 🏏\n\n"
+            "📌 *FUNCIÓN:* Será un golpeador que contará con la misión de golpear a tanto cazadores como al guardián del equipo contrario y a su vez defender a su equipo de los golpes.\n\n"
+            "⚔️ *FORMATO DE GOLPE:*\n"
+            "`[Emblema]🏏💥[3 números]@cazador`\n"
+            "💡 *Ejemplo:* `💚🐍🏏💥9️⃣5️⃣7️⃣@cazador`\n\n"
+            "🛡️ *FORMATO DE DEFENSA:*\n"
+            "`[Emblema]🧹[3 flechas según tabla]🏏❌`\n\n"
+            "📊 *TABLA PARA DEFENDER GOLPES:*\n"
+            "• (2️⃣5️⃣1️⃣) → 🧹⬅️\n"
+            "• (8️⃣9️⃣3️⃣) → 🧹⬆️\n"
+            "• (7️⃣4️⃣6️⃣) → 🧹➡️\n\n"
+            "💡 *Ejemplo de defensa:*\n"
+            "`💚🐍🧹⬆️⬅️➡️🏏❌`\n\n"
+            "⭕ *REGLAS:*\n"
+            "• Sólo tienen permitido golpear a los cazadores y al respectivo guardián del equipo contrario y cada golpeador podrá golpear una vez por ronda.\n"
+            "• En caso de que el golpe al guardián sea efectivo y fuera efectuado durante el tiro al aro, si el golpeador contrario no defiende en el tiempo requerido (5 segundos) a pesar de la defensa del guardián se considerará un golpe especial que determinará un tiro efectivo a favor del equipo golpeador.\n"
+            "• Cualquier mal uso de emojis a la hora de defender será considerado golpe efectivo.\n"
+            "• Cualquier mal uso de emojis a la hora de golpear será detenido el partido y otorgando un penal al equipo contrario.\n\n"
+            "🏰💫🏰💫🏰💫🏰💫🏰💫🏰"
+        ),
+        "aprender_buscador": (
+            "🏰💫🏰💫🏰💫🏰💫🏰💫🏰\n\n"
+            "*BUSCADOR* 🔅✊🏻\n\n"
+            "📌 *FUNCIÓN:* El buscador no cuenta con un tiempo de reacción limitado, aparecerán un total de tres snitches durante todo el partido, debe estar atento en todo momento pues no sabrá donde ni cuando pueda aparecer la escurridiza snitch.\n\n"
+            "✨ *MECÁNICA:*\n"
+            "Durante cualquier momento del partido el moderador (bot) pondrá una combinación de direcciones (de 6 a 10) que seguirá la snitch al azar y ambos buscadores deberán reproducirlos con sus flechas respectivamente.\n\n"
+            "📝 *Ejemplo de combinación:*\n"
+            "`🔅ARRIBA/ABAJO/DERECHA/IZQUIERDA/ARRIBA/ARRIBA/ABAJO`\n\n"
+            "🔍 *Formato de respuesta del buscador:*\n"
+            "`[Emblema][Escoba][🖐🏻][🔅✊🏻][secuencia de flechas]`\n\n"
+            "💡 *Ejemplo:*\n"
+            "`❤️🦁🧹🖐🏻⬆️⬇️➡️⬅️⬆️⬆️⬇️🔅✊🏻`\n\n"
+            "🏆 *Gana la snitch* el buscador que atrape más rápido y bien la snitch.\n\n"
+            "🏰💫🏰💫🏰💫🏰💫🏰💫🏰"
+        ),
+    }
+
+    texto = textos.get(opcion, "Opción no válida")
+
+    # Botones de acción al final
+    keyboard = [
+        [InlineKeyboardButton("🏋️ Ir a practicar", callback_data="ir_a_practicar")],
+        [InlineKeyboardButton("📚 Regresar a estudiar otra cosa", callback_data="aprender_menu")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await query.edit_message_text(
+        texto,
         reply_markup=reply_markup,
         parse_mode="Markdown"
     )
 
-async def boton_aprender(update, context):
+async def ir_a_practicar(update, context):
     query = update.callback_query
-    print(f"🔘 boton_aprender recibió: {query.data}")  # ← Línea de debug
     await query.answer()
     
-    opcion = query.data
-    
-    if opcion == "aprender_general":
-        texto = (
-            "📜 *REGLAS GENERALES DEL QUIDDITCH EMOJI* 📜\n\n"
-            "🎯 *OBJETIVO:* Ganar más puntos que el equipo contrario.\n\n"
-            "⚡ *PUNTUACIÓN:*\n"
-            "• Gol en los aros: 10 puntos\n"
-            "• Capturar Snitch: 150 puntos\n\n"
-            "🔄 *DESARROLLO:*\n"
-            "• 3 snitches por partido\n"
-            "• El partido termina cuando se capturan las 3\n\n"
-            "🏆 *GANADOR:* El equipo con más puntos al final."
-        )
-    elif opcion == "aprender_cazador":
-        texto = (
-            "🔴 *CAZADOR* 🔴\n\n"
-            "📌 *FUNCIÓN:* Anotar goles en los aros contrarios.\n\n"
-            "🔄 *PASES:*\n"
-            "• Formato: [Casa]🏉@cazador\n"
-            "• Ejemplo: ❤️🏉@cazador2\n"
-            "• Mínimo 4 pases, máximo 10\n"
-            "• No se puede omitir a ningún cazador\n\n"
-            "🎯 *DISPARO:*\n"
-            "• Formato: `[Casa]🏉[Aro][3 números]`\n"
-            "• Ejemplo: ❤️🏉🅱️3️⃣7️⃣1️⃣\n\n"
-            "❌ *FALLOS:* Penal o pérdida de la Quaffle"
-        )
-    elif opcion == "aprender_guardian":
-        texto = (
-            "🟡 *GUARDIÁN* 🟡\n\n"
-            "📌 *FUNCIÓN:* Defender los aros y evitar goles.\n\n"
-            "🛡️ *DEFENSA:*\n"
-            "• Tienes 5 segundos para responder\n"
-            "• Formato: `[Casa]🧹[Aro][3 flechas]`\n\n"
-            "• Ejemplo: ❤️🧹🅱️⬅️⬆️➡️\n\n"
-            "📊 *TABLA DE NÚMEROS A FLECHAS:*\n"
-            "1⬅️ 2⬅️ 3⬆️ 4➡️ 5⬅️ 6➡️ 7➡️ 8⬆️ 9⬆️\n\n"
-            "• Combinaciones clave:\n"
-            "  251 = ⬅️ | 893 = ⬆️ | 746 = ➡️\n\n"
-            "❌ *SI FALLAS:* Gol efectivo"
-        )
-    elif opcion == "aprender_golpeador":
-        texto = (
-            "🟢 *GOLPEADOR* 🟢\n\n"
-            "📌 *FUNCIÓN:* Golpear rivales y defender a tu equipo.\n\n"
-            "⚔️ *GOLPE:*\n"
-            "• Formato: `[Casa]🏏💥[3 números]@rival`\n"
-            "• Ejemplo: ❤️🏏💥3️⃣7️⃣1️⃣\n\n"
-            "• 1 golpe por ronda\n\n"
-            "🛡️ *DEFENSA:*\n"
-            "• Formato: `[Casa]🧹[3 flechas]🏏❌`\n"
-            "• Ejemplo: ❤️🧹⬅️⬆️➡️🏏❌\n\n"
-            "• Tienes 5 segundos para defender\n\n"
-            "💥 *GOLPE EFECTIVO:* Rival fuera 20 segundos\n"
-            "🎯 *GOLPE ESPECIAL:* Al guardián durante tiro = gol automático"
-        )
-    elif opcion == "aprender_buscador":
-        texto = (
-            "🟣 *BUSCADOR* 🟣\n\n"
-            "📌 *FUNCIÓN:* Capturar la Snitch.\n\n"
-            "✨ *MECÁNICA:*\n"
-            "• Aparecen 3 snitches por partido\n"
-            "• El bot muestra una secuencia de 6-10 direcciones\n\n"
-            "• Moderador: ARRIBA|ABAJO|DERECHA|IZQUIERDA|ARRIBA|ABAJO\n"
-            "🔍 *RESPUESTA:*\n"
-            "• Formato: `[Casa]🧹🖐🏻[secuencia flechas]🔅✊🏻`\n"
-            "• Ejemplo: ❤️🧹🖐🏻⬆️⬇️⬅️➡️⬆️⬇️🔅✊🏻\n\n"
-            "• Gana la snitch el que responda más rápido y correcto\n\n"
-            "⚠️ *SI FALLAS:* Pierdes esa snitch"
-        )
-    elif opcion == "aprender_practica":
-        texto = (
-            "⚡ *PRÁCTICA RÁPIDA* ⚡\n\n"
-            "Próximamente tendrás ejercicios interactivos para:\n\n"
-            "• Practicar disparos como Cazador\n"
-            "• Entrenar defensas como Guardián\n"
-            "• Mejorar reflejos como Buscador\n"
-            "• Golpear rivales como Golpeador\n\n"
-            "¡Prepárate para convertirte en un maestro del Quidditch!"
-        )
-    else:
-        texto = "Opción no válida."
-    
-    await query.edit_message_text(
-        texto,
-        parse_mode="Markdown"
-    )
-
-async def practicar(update, context):
+    # Redirigir al menú de practicar
     keyboard = [
-        [
-            InlineKeyboardButton("🔴 Cazador", callback_data="prac_cazador"),
-            InlineKeyboardButton("🟡 Guardián", callback_data="prac_guardian")
-        ],
-        [
-            InlineKeyboardButton("🟢 Golpeador", callback_data="prac_golpeador"),
-            InlineKeyboardButton("🟣 Buscador", callback_data="prac_buscador")
-        ]
+        [InlineKeyboardButton("🔴 Cazador", callback_data="prac_cazador"), InlineKeyboardButton("🟡 Guardián", callback_data="prac_guardian")],
+        [InlineKeyboardButton("🟢 Golpeador", callback_data="prac_golpeador"), InlineKeyboardButton("🟣 Buscador", callback_data="prac_buscador")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(
+    await query.edit_message_text(
         "🏋️ *MODO PRACTICAR* 🏋️\n\nElige la posición que quieres entrenar:",
         reply_markup=reply_markup,
         parse_mode="Markdown"
     )
 
+async def aprender_menu(update, context):
+    query = update.callback_query
+    await query.answer()
+    
+    # Mostrar el menú de aprender nuevamente
+    keyboard = [
+        [InlineKeyboardButton("📜 Reglas generales", callback_data="aprender_general"), InlineKeyboardButton("🔴 Cazador", callback_data="aprender_cazador")],
+        [InlineKeyboardButton("🟡 Guardián", callback_data="aprender_guardian"), InlineKeyboardButton("🟢 Golpeador", callback_data="aprender_golpeador")],
+        [InlineKeyboardButton("🟣 Buscador", callback_data="aprender_buscador"), InlineKeyboardButton("⚡ Práctica rápida", callback_data="aprender_practica")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_text(
+        "📚 *CENTRO DE APRENDIZAJE*\n\nElige una opción:",
+        reply_markup=reply_markup,
+        parse_mode="Markdown"
+    )
+
+async def practicar(update, context):
+    keyboard = [
+        [InlineKeyboardButton("🔴 Cazador", callback_data="prac_cazador"), InlineKeyboardButton("🟡 Guardián", callback_data="prac_guardian")],
+        [InlineKeyboardButton("🟢 Golpeador", callback_data="prac_golpeador"), InlineKeyboardButton("🟣 Buscador", callback_data="prac_buscador")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text("🏋️ *MODO PRACTICAR*\n\nElige una posición:", reply_markup=reply_markup, parse_mode="Markdown")
+
 async def practicar_cazador(update, context):
     query = update.callback_query
     await query.answer()
     
-    # Guardar que el usuario está en práctica de cazador
     context.user_data['practica_activa'] = 'cazador'
     context.user_data['pases_cazador'] = 0
     context.user_data['pases_realizados'] = []
@@ -422,146 +403,74 @@ async def practicar_cazador(update, context):
     
     await query.edit_message_text(
         "🔴 *PRÁCTICA DE CAZADOR* 🔴\n\n"
-        "Objetivo: Realiza 4 pases y luego dispara.\n\n"
+        "📌 *Objetivo:* Realiza 4 pases y luego dispara.\n\n"
         "📝 *Formato de pase:*\n"
-        "`❤️🏉@usuario`\n\n"
+        "`❤️🏉@cazador2`\n"
+        "(Reemplaza 'cazador2' con el nombre del usuario)\n\n"
         "🎯 *Formato de disparo:*\n"
-        "`❤️🏉🅰️1️⃣2️⃣3️⃣`\n\n"
-        "¡Comienza a practicar! Escribe tu primer pase.\n\n"
-        "*(Escribe 'salir' en cualquier momento para terminar)*",
+        "`❤️🏉🅰️123`\n"
+        "(Reemplaza '🅰️' por 🅰️, 🅱️ u 🅾️)\n\n"
+        "💡 *Ejemplo de pase:* `❤️🏉@cazador2`\n"
+        "💡 *Ejemplo de disparo:* `❤️🏉🅰️123`\n\n"
+        "⚡ *Escribe 'salir' para terminar.*",
         reply_markup=reply_markup,
         parse_mode="Markdown"
     )
-    
 
 async def practicar_guardian(update, context):
     query = update.callback_query
     await query.answer()
-    
     context.user_data['practica_activa'] = 'guardian'
-    
-    keyboard = [[InlineKeyboardButton("❌ Salir de práctica", callback_data="salir_practica")]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    await query.edit_message_text(
-        "🟡 *PRÁCTICA DE GUARDIÁN* 🟡\n\n"
-        "Te mostraré un disparo y debes defenderlo.\n\n"
-        "📊 *Tabla de números a flechas:*\n"
-        "1⬅️ 2⬅️ 3⬆️ 4➡️ 5⬅️ 6➡️ 7➡️ 8⬆️ 9⬆️\n\n"
-        "📝 *Formato de defensa:*\n"
-        "`❤️🧹🅰️⬆️⬅️➡️`\n\n"
-        "¿Listo? Escribe 'empezar' para comenzar.",
-        reply_markup=reply_markup,
-        parse_mode="Markdown"
-    )
+    await query.edit_message_text("🟡 *PRÁCTICA DE GUARDIÁN*\n\nEscribe 'salir' para terminar.", parse_mode="Markdown")
 
 async def practicar_golpeador(update, context):
     query = update.callback_query
     await query.answer()
-    
     context.user_data['practica_activa'] = 'golpeador'
-    
-    keyboard = [[InlineKeyboardButton("❌ Salir de práctica", callback_data="salir_practica")]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    await query.edit_message_text(
-        "🟢 *PRÁCTICA DE GOLPEADOR* 🟢\n\n"
-        "Objetivo: Golpea al rival y defiende sus golpes.\n\n"
-        "⚔️ *Formato de golpe:*\n"
-        "`❤️🏏💥1️⃣2️⃣3️⃣@rival`\n\n"
-        "🛡️ *Formato de defensa:*\n"
-        "`❤️🧹⬆️⬅️➡️🏏❌`\n\n"
-        "Escribe 'golpear' para atacar o 'defender' para practicar defensa.\n\n"
-        "*(Escribe 'salir' en cualquier momento para terminar)*",
-        reply_markup=reply_markup,
-        parse_mode="Markdown"
-    )
+    await query.edit_message_text("🟢 *PRÁCTICA DE GOLPEADOR*\n\nEscribe 'salir' para terminar.", parse_mode="Markdown")
 
 async def practicar_buscador(update, context):
     query = update.callback_query
     await query.answer()
-    
     context.user_data['practica_activa'] = 'buscador'
-    
-    keyboard = [[InlineKeyboardButton("❌ Salir de práctica", callback_data="salir_practica")]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    await query.edit_message_text(
-        "🟣 *PRÁCTICA DE BUSCADOR* 🟣\n\n"
-        "Aparecerá una secuencia de flechas que debes copiar.\n\n"
-        "📝 *Formato de respuesta:*\n"
-        "`❤️🧹🖐🏻🔅✊🏻⬆️⬇️➡️⬅️⬆️`\n\n"
-        "Escribe 'empezar' para recibir tu primera secuencia.",
-        reply_markup=reply_markup,
-        parse_mode="Markdown"
-    )
+    await query.edit_message_text("🟣 *PRÁCTICA DE BUSCADOR*\n\nEscribe 'salir' para terminar.", parse_mode="Markdown")
 
 async def salir_practica(update, context):
     query = update.callback_query
     await query.answer()
-    
     context.user_data['practica_activa'] = None
-    await query.edit_message_text(
-        "✅ Has salido del modo práctica.\n\n"
-        "Usa /practicar cuando quieras volver a entrenar."
-    )
+    await query.edit_message_text("✅ Has salido del modo práctica.")
 
 async def jugar(update, context):
-    await update.message.reply_text(
-        "🏆 *MODO JUGAR* 🏆\n\n"
-        "Para iniciar una partida, el bot debe estar en un grupo.\n\n"
-        "Comandos disponibles:\n"
-        "/iniciar_partida - Comenzar una nueva partida\n"
-        "/unirse - Unirse a una partida existente\n\n"
-        "⚠️ Esta función estará disponible próximamente."
-    )
-
-   
+    await update.message.reply_text("🏆 *MODO JUGAR*\n\nPróximamente.", parse_mode="Markdown")
 
 # ============= INICIAR EL BOT =============
 def main():
-
-    import sys
-    import asyncio
-    
-    # Solo para Windows con Python 3.14+
-    if sys.platform == "win32" and sys.version_info >= (3, 14):
-        try:
-            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-        except DeprecationWarning:
-            pass  # Ignorar advertencia
-
-    # Iniciar base de datos
     iniciar_bd()
     
-    # Crear la aplicación
     app = Application.builder().token(TOKEN).build()
     
-    # Comandos
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("crear_cuenta", crear_cuenta))
-    app.add_handler(CommandHandler("aprender", aprender))      
-    app.add_handler(CommandHandler("practicar", practicar))    
-    app.add_handler(CommandHandler("jugar", jugar))            
-
-    #Manejador de botones
+    app.add_handler(CommandHandler("aprender", aprender))
+    app.add_handler(CommandHandler("practicar", practicar))
+    app.add_handler(CommandHandler("jugar", jugar))
+    
     app.add_handler(CallbackQueryHandler(practicar_cazador, pattern="prac_cazador"))
     app.add_handler(CallbackQueryHandler(practicar_guardian, pattern="prac_guardian"))
     app.add_handler(CallbackQueryHandler(practicar_golpeador, pattern="prac_golpeador"))
     app.add_handler(CallbackQueryHandler(practicar_buscador, pattern="prac_buscador"))
     app.add_handler(CallbackQueryHandler(salir_practica, pattern="salir_practica"))
     app.add_handler(CallbackQueryHandler(boton_aprender, pattern="aprender_"))
+    app.add_handler(CallbackQueryHandler(ir_a_practicar, pattern="ir_a_practicar"))
+    app.add_handler(CallbackQueryHandler(aprender_menu, pattern="aprender_menu"))
 
-    # Manejador de mensajes de texto
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, manejar_mensajes))
-     
+    
     print("🐲 Bot de Quidditch iniciado...")
     
-    # Inicia el servidor web en un hilo separado
     threading.Thread(target=run_web).start()
-    
     app.run_polling()
 
 if __name__ == "__main__":
-#>>>>>>> 22b6683ae61f0cfdfd36d8bfd9f783e168acea0b
     main()

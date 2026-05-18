@@ -1,3 +1,0 @@
-contra: Hancl.2101/
-url api: https://qjrxxjxjuxzrcnkanazx.supabase.co/rest/v1/
-clave public: sb_publishable_p2j81gzMUdmq-6mJmZY8wg_EGTM2e0t
