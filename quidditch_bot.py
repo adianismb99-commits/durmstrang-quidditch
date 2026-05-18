@@ -139,7 +139,11 @@ async def manejar_mensajes(update, context):
                 context.user_data['pases_realizados'] = []
         
         # Verificar si es un disparo (formato: [Casa]🏉[Aro][3 números])
-        elif '🏉' in mensaje and ('🅰️' in mensaje or '🅱️' in mensaje or '🅾️' in mensaje):
+        elif '🏉' in mensaje and (
+            '🅰' in mensaje or '🇦' in mensaje or '🅰️' in mensaje or 'A' in mensaje or
+            '🅱' in mensaje or '🇧' in mensaje or '🅱️' in mensaje or 'B' in mensaje or
+            '🅾' in mensaje or '🇴' in mensaje or '🅾️' in mensaje or 'O' in mensaje):
+
             pases = context.user_data.get('pases_cazador', 0)
         
             if pases < 4:
@@ -148,7 +152,7 @@ async def manejar_mensajes(update, context):
                     f"Completa los pases mínimos primero."
                 )
             else:
-                # Extraer números (acepta 1,2,3 en lugar de 1️⃣,2️⃣,3️⃣)
+                # Extraer números
                 numeros = re.findall(r'[1-9]', mensaje)
             
                 if len(numeros) == 3:
@@ -156,13 +160,14 @@ async def manejar_mensajes(update, context):
                 
                     # Detectar qué aro usó
                     aro = None
-                    if '🅰️' in mensaje:
+                    if '🅰' in mensaje or '🇦' in mensaje or '🅰️' in mensaje or 'A' in mensaje:
                         aro = '🅰️'
-                    elif '🅱️' in mensaje:
+                    elif '🅱' in mensaje or '🇧' in mensaje or '🅱️' in mensaje or 'B' in mensaje:
                         aro = '🅱️'
-                    elif '🅾️' in mensaje:
+                    elif '🅾' in mensaje or '🇴' in mensaje or '🅾️' in mensaje or 'O' in mensaje:
                         aro = '🅾️'
-                
+                    else:
+                        aro = '?'                
                     # Detectar qué casa usó
                     casa = "❤️" if '❤️' in mensaje else "💜" if '💜' in mensaje else "💚" if '💚' in mensaje else "?"
                 
@@ -171,7 +176,7 @@ async def manejar_mensajes(update, context):
                         f"Casa: {casa} | Aro: {aro}\n"
                         f"Números: {''.join(numeros)}\n\n"
                         f"🟡 Defensa del guardián: {flechas}\n\n"
-                        f"✅ ¡GOL! +100 puntos (en práctica es un simulacro)"
+                        f"✅ ¡GOL! +100 puntos"
                     )
                 
                     # Reiniciar práctica después del gol
