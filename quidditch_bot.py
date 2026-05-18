@@ -15,14 +15,6 @@ TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "8840107743:AAFNg1W9aSNMH_4vxYyPUfF
 # === SERVICIO WEB PARA KEEP-ALIVE ===
 flask_app = Flask(__name__)
 
-# Obtener la casa del usuario desde la base de datos
-conn = sqlite3.connect('quidditch.db')
-cursor = conn.cursor()
-cursor.execute("SELECT casa FROM usuarios WHERE id_telegram = ?", (user_id,))
-resultado = cursor.fetchone()
-conn.close()
-casa_usuario = resultado[0] if resultado else "❤️"  # Por defecto ❤️ si no encuentra
-
 @flask_app.route('/')
 def health_check():
     return "OK", 200
