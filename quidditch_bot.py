@@ -251,10 +251,8 @@ async def manejar_mensajes(update, context):
                 context.user_data['defensa_correcta'] = ''.join([defensa_numero(n) for n in numeros])
                 
                 # Mostrar tabla de conversión completa
-                tabla = "• (2️⃣5️⃣1️⃣) → 🧹⬅️\n"
-                        "• (8️⃣9️⃣3️⃣) → 🧹⬆️\n"
-                        "• (7️⃣4️⃣6️⃣) → 🧹➡️\n\n"
-                
+                tabla = "(2️⃣5️⃣1️⃣) → 🧹⬅️\n(8️⃣9️⃣3️⃣) → 🧹⬆️\n(7️⃣4️⃣6️⃣) → 🧹➡️"
+                      
                 await update.message.reply_text(
                     f"⚡ *¡PRIMER DISPARO!* ⚡\n\n"
                     f"`{casa}🏉{aro}{numeros}`\n\n"
