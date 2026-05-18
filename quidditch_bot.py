@@ -529,38 +529,31 @@ async def practicar_guardian(update, context):
     
     # Guardar que el usuario está en práctica de guardián
     context.user_data['practica_activa'] = 'guardian'
+    context.user_data['guardian_aciertos'] = 0
+    context.user_data['guardian_fallos'] = 0
+    context.user_data['guardian_esperando_listo'] = True  # Esperando confirmación
     context.user_data['guardian_esperando_defensa'] = False
     
     keyboard = [[InlineKeyboardButton("❌ Salir de práctica", callback_data="salir_practica")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    # Generar primer disparo
-    casa, aro, numeros = generar_disparo_aleatorio()
-    context.user_data['disparo_actual'] = {'casa': casa, 'aro': aro, 'numeros': numeros}
-    
-    # Calcular defensa correcta
-    flechas_correctas = ''.join([defensa_numero(n) for n in numeros])
-    context.user_data['defensa_correcta'] = flechas_correctas
-    
     await query.edit_message_text(
         "🟡 *PRÁCTICA DE GUARDIÁN* 🟡\n\n"
-        f"⚡ *DISPARO:*\n"
-        f"{casa}🏉{aro}{numeros}\n\n"
+        "📌 *Objetivo:* Defiende los disparos para evitar goles.\n\n"
         "📊 *TABLA PARA DEFENDER DISPAROS:*\n"
         "• (2️⃣5️⃣1️⃣) → 🧹⬅️\n"
         "• (8️⃣9️⃣3️⃣) → 🧹⬆️\n"
         "• (7️⃣4️⃣6️⃣) → 🧹➡️\n\n"
         "📝 *Formato de defensa:*\n"
-        f"`{casa}🧹{aro}⬆️⬇️➡️`\n\n"
-        "🛡️ *Escribe tu defensa con el formato:*\n"
         "`[Casa]🧹[Aro][3 flechas]`\n\n"
-        "💡 *Ejemplo:* `❤️🧹🅰️⬆️⬅️➡️`\n\n"
-        "⏱️ *Tienes 5 segundos para responder.*\n"
+        "💡 *Ejemplo:*\n"
+        "Si el disparo es: `❤️🏉🅰️1️⃣2️⃣3️⃣`\n"
+        "La defensa correcta es: `❤️🧹🅰️⬅️⬅️⬆️`\n\n"
+        "⚡ *Escribe 'si' cuando estés listo para comenzar.*\n"
         "⚡ *Escribe 'salir' para terminar.*",
         reply_markup=reply_markup,
         parse_mode="Markdown"
     )
-    context.user_data['guardian_esperando_defensa'] = True
 
 async def practicar_golpeador(update, context):
     query = update.callback_query
