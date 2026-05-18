@@ -248,15 +248,14 @@ async def manejar_mensajes(update, context):
             user_id = update.effective_user.id
             nombre = update.effective_user.first_name
             
-            data = {
-                "id_telegram": user_id,
-                "nombre": nombre,
-                "casa": casa,
-                "cargo": "Estudiante",
-                "puntos_totales": 0,
-                "fecha_registro": datetime.now().isoformat()
-            }
-            supabase.table('usuarios').insert(data).execute()
+            conn = sqlite3.connect('quidditch.db')
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO usuarios (id_telegram, nombre, casa, cargo, fecha_registro) VALUES (?, ?, ?, ?, ?)",
+                (user_id, nombre, casa, "Estudiante", datetime.now())
+            )
+            conn.commit()
+            conn.close()
             
             await update.message.reply_text(
                 f"✅ ¡Cuenta creada!\n\n"
