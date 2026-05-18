@@ -339,7 +339,7 @@ async def boton_aprender(update, context):
     # Botones de acción al final
     keyboard = [
         [InlineKeyboardButton("🏋️ Ir a practicar", callback_data="ir_a_practicar")],
-        [InlineKeyboardButton("📚 Regresar a estudiar otra cosa", callback_data="aprender_menu")]
+        [InlineKeyboardButton("📚 Estudiar otra posicion", callback_data="aprender_menu")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
