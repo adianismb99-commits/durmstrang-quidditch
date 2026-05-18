@@ -120,7 +120,7 @@ async def manejar_mensajes(update, context):
             
             if pases_actuales < 4:
                 await update.message.reply_text(
-                    f"✅ Pase correcto. Llevas {pases_actuales}/4 pases.\n"
+                    f"✅ Pase correcto. Llevas {pases_actuales}/4 pases minimos para disparo.\n"
                     f"Sigue pasando la Quaffle. (máximo 10 pases)"
                 )
             elif 4 <= pases_actuales <= 10:
@@ -171,7 +171,7 @@ async def manejar_mensajes(update, context):
                         f"Casa: {casa} | Aro: {aro}\n"
                         f"Números: {''.join(numeros)}\n\n"
                         f"🟡 Defensa del guardián: {flechas}\n\n"
-                        f"✅ ¡GOL! +10 puntos (en práctica es un simulacro)"
+                        f"✅ ¡GOL! +100 puntos (en práctica es un simulacro)"
                     )
                 
                     # Reiniciar práctica después del gol
@@ -236,16 +236,151 @@ async def boton_aprender(update, context):
     query = update.callback_query
     await query.answer()
     opcion = query.data
+
     textos = {
-        "aprender_general": "📜 *REGLAS GENERALES*\n\nGol = 100 pts | Snitch = 150 pts\nGolpe efectivo = 50 pts",
-        "aprender_cazador": "🔴 *CAZADOR*\n\nPases: mínimo 4, máximo 10\nDisparo: [Casa]🏉[Aro]123",
-        "aprender_guardian": "🟡 *GUARDIÁN*\n\nDefensa: 5 segundos\nTabla: 1⬅️ 2⬅️ 3⬆️ 4➡️ 5⬅️ 6➡️ 7➡️ 8⬆️ 9⬆️",
-        "aprender_golpeador": "🟢 *GOLPEADOR*\n\nGolpe: [Casa]🏏💥123@rival\nDefensa: [Casa]🧹⬅️⬆️➡️🏏❌",
-        "aprender_buscador": "🟣 *BUSCADOR*\n\nCaptura snitch: copiar secuencia de flechas",
-        "aprender_practica": "⚡ *PRÁCTICA RÁPIDA*\n\nPróximamente"
+        "aprender_general": (
+            "🏉 *REGLAS GENERALES* 🏉\n\n"
+            "0. *Base:* Se sigan las normas generales del colegio durante el partido.\n\n"
+            "1. *Puntos:* El valor de la snitch es de 150, de un gol de 100 y de un golpe efectivo 50.\n\n"
+            "2. *Golpes efectivos:* 3 golpes efectivos a una misma persona lo saca del juego durante 5 minutos.\n\n"
+            "3. *Cambios:* Los cambios se realizan al acabar una ronda y solo el capitán está autorizado a hacer cambios o hablar durante el partido.\n\n"
+            "4. *Árbitro:* Solamente el árbitro está autorizado a detener el partido o mandar multimedia, para hablar con el árbitro se debe etiquetar a este en el partido una vez haya finalizado una ronda y solo puede ser el capitán, ya sea para corregir algún error o para un cambio.\n\n"
+            "5. *Suplentes:* Cada equipo podrá contar con un máximo de 4 suplentes.\n\n"
+            "6. *Participantes:* En caso de la ausencia de algún participante a la hora de comenzar el partido tendrán 2 minutos para decidir y realizar un cambio o el partido comenzará a pesar de que falte alguien.\n\n"
+            "7. *Default:* Un equipo titular que le falten 3 integrantes perderá por default, esto también ocurrirá en caso de que no se presenten al partido, el default dará al equipo contrario los puntos de las 3 snitch y el equipo que no se presentó se llevará una penalización de puntos y galeones para su casa.\n\n"
+            "8. *Amonestaciones:* El incumplimiento de alguna de las reglas puede ser penalizado de 3 formas, tarjeta amarilla de advertencia (amonestación leve), tarjeta roja de expulsión (amonestación fuerte), tarjeta negra de expulsión y pérdida de puntos (amonestación grave), un participante expulsado deja a su equipo con 1 de menos durante 10 minutos y no puede volver a jugar ese partido.\n\n"
+            "9. *Vacío legal:* En caso de vacío legal o inconsistencia de alguna regla o norma el árbitro tendrá potestad total para tomar la decisión que crea correspondiente."
+        ),
+        "aprender_cazador": (
+            "🏰💫🏰💫🏰💫🏰💫🏰💫🏰\n\n"
+            "*CAZADOR* 🏉\n\n"
+            "📌 *FUNCIÓN:* Los cazadores tendrán la tarea de pasarse la quaffle entre ellos y tirar a los aros para intentar anotar al contrario.\n\n"
+            "🔄 *FORMATO DE PASE:*\n"
+            "`[Emblema]🏉@cazador`\n"
+            "💡 *Ejemplo:* `💛🦡🏉@cazador`\n\n"
+            "🎯 *FORMATO DE DISPARO:*\n"
+            "`[Emblema]🏉[Aro][3 números]`\n"
+            "💡 *Ejemplo:* `💛🦡🏉🅱️3️⃣7️⃣1️⃣`\n\n"
+            "⚡ *PENALES:*\n"
+            "`[Emblema]🏉[Aro][6 números]`\n"
+            "💡 *Ejemplo:* `💜🐍🏉🅱️5️⃣2️⃣1️⃣7️⃣8️⃣4️⃣`\n\n"
+            "⭕ *REGLAS:*\n"
+            "• Estarán en juego un total de 3 cazadores con su respectivo suplente.\n"
+            "• Deben realizar un mínimo de 4 pases y un máximo de 10 sin omitir a ningún cazador antes de disparar a los aros.\n"
+            "• En caso de fallar en la utilización de cualquier emoji, el árbitro cantará penal para el equipo contrario que cometió el error, eligiendo también que cazador será el encargado de disparar.\n"
+            "• La omisión de alguno, el exceso o falta de pases harán que el equipo poseedor del balón pierda la quaffle y pase instantáneamente al guardián del equipo contrario el cuál tendrá la misión de pasarla a sus cazadores.\n\n"
+            "🏰💫🏰💫🏰💫🏰💫🏰💫🏰"
+        ),
+        "aprender_guardian": (
+            "🏰💫🏰💫🏰💫🏰💫🏰💫🏰\n\n"
+            "*GUARDIÁN* 🧹\n\n"
+            "📌 *FUNCIÓN:* El guardián debe dar todo de sí y tener la habilidad suficiente para ser capaz de ir hacia cualquiera de los tres aros y defenderlo evitando el tiro.\n\n"
+            "📊 *TABLA PARA DEFENDER DISPAROS:*\n"
+            "• (2️⃣5️⃣1️⃣) → 🧹⬅️\n"
+            "• (8️⃣9️⃣3️⃣) → 🧹⬆️\n"
+            "• (7️⃣4️⃣6️⃣) → 🧹➡️\n\n"
+            "📝 *NOTA:* Esta tabla el Guardián oficial se la debe aprender para el torneo de quidditch.\n\n"
+            "🎯 *EJEMPLO DE DISPARO:*\n"
+            "`💙🦅🏉🅰️3️⃣7️⃣1️⃣`\n\n"
+            "🛡️ *DEFENSA DEL GUARDIÁN:*\n"
+            "`💙🦅🧹🅰️⬆️➡️⬅️`\n\n"
+            "⚡ *PENALES:*\n"
+            "Un cazador realizará un disparo a cualquiera de los aros de 6 combinaciones de números.\n\n"
+            "💡 *Ejemplo de disparo de penal:*\n"
+            "`💙🦅🏉🅾️4️⃣2️⃣8️⃣1️⃣9️⃣7️⃣`\n\n"
+            "🛡️ *Defensa para penal:*\n"
+            "`💙🦅🧹🅾️➡️⬅️⬆️⬅️⬆️➡️`\n\n"
+            "⭕ *REGLAS:*\n"
+            "• Cualquier fallo tanto en combinación como en emojis a la hora de defender será considerado tiro efectivo.\n"
+            "• Tendrá un máximo de 5 segundos para efectuar la correcta defensa.\n\n"
+            "🏰💫🏰💫🏰💫🏰💫🏰💫🏰"
+        ),
+        "aprender_golpeador": (
+            "🏰💫🏰💫🏰💫🏰💫🏰💫🏰\n\n"
+            "*GOLPEADOR* 🏏\n\n"
+            "📌 *FUNCIÓN:* Será un golpeador que contará con la misión de golpear a tanto cazadores como al guardián del equipo contrario y a su vez defender a su equipo de los golpes.\n\n"
+            "⚔️ *FORMATO DE GOLPE:*\n"
+            "`[Emblema]🏏💥[3 números]@cazador`\n"
+            "💡 *Ejemplo:* `💚🐍🏏💥9️⃣5️⃣7️⃣@cazador`\n\n"
+            "🛡️ *FORMATO DE DEFENSA:*\n"
+            "`[Emblema]🧹[3 flechas según tabla]🏏❌`\n\n"
+            "📊 *TABLA PARA DEFENDER GOLPES:*\n"
+            "• (2️⃣5️⃣1️⃣) → 🧹⬅️\n"
+            "• (8️⃣9️⃣3️⃣) → 🧹⬆️\n"
+            "• (7️⃣4️⃣6️⃣) → 🧹➡️\n\n"
+            "💡 *Ejemplo de defensa:*\n"
+            "`💚🐍🧹⬆️⬅️➡️🏏❌`\n\n"
+            "⭕ *REGLAS:*\n"
+            "• Sólo tienen permitido golpear a los cazadores y al respectivo guardián del equipo contrario y cada golpeador podrá golpear una vez por ronda.\n"
+            "• En caso de que el golpe al guardián sea efectivo y fuera efectuado durante el tiro al aro, si el golpeador contrario no defiende en el tiempo requerido (5 segundos) a pesar de la defensa del guardián se considerará un golpe especial que determinará un tiro efectivo a favor del equipo golpeador.\n"
+            "• Cualquier mal uso de emojis a la hora de defender será considerado golpe efectivo.\n"
+            "• Cualquier mal uso de emojis a la hora de golpear será detenido el partido y otorgando un penal al equipo contrario.\n\n"
+            "🏰💫🏰💫🏰💫🏰💫🏰💫🏰"
+        ),
+        "aprender_buscador": (
+            "🏰💫🏰💫🏰💫🏰💫🏰💫🏰\n\n"
+            "*BUSCADOR* 🔅✊🏻\n\n"
+            "📌 *FUNCIÓN:* El buscador no cuenta con un tiempo de reacción limitado, aparecerán un total de tres snitches durante todo el partido, debe estar atento en todo momento pues no sabrá donde ni cuando pueda aparecer la escurridiza snitch.\n\n"
+            "✨ *MECÁNICA:*\n"
+            "Durante cualquier momento del partido el moderador (bot) pondrá una combinación de direcciones (de 6 a 10) que seguirá la snitch al azar y ambos buscadores deberán reproducirlos con sus flechas respectivamente.\n\n"
+            "📝 *Ejemplo de combinación:*\n"
+            "`🔅ARRIBA/ABAJO/DERECHA/IZQUIERDA/ARRIBA/ARRIBA/ABAJO`\n\n"
+            "🔍 *Formato de respuesta del buscador:*\n"
+            "`[Emblema][Escoba][🖐🏻][🔅✊🏻][secuencia de flechas]`\n\n"
+            "💡 *Ejemplo:*\n"
+            "`❤️🦁🧹🖐🏻⬆️⬇️➡️⬅️⬆️⬆️⬇️🔅✊🏻`\n\n"
+            "🏆 *Gana la snitch* el buscador que atrape más rápido y bien la snitch.\n\n"
+            "🏰💫🏰💫🏰💫🏰💫🏰💫🏰"
+        ),
     }
+
     texto = textos.get(opcion, "Opción no válida")
-    await query.edit_message_text(texto, parse_mode="Markdown")
+
+    # Botones de acción al final
+    keyboard = [
+        [InlineKeyboardButton("🏋️ Ir a practicar", callback_data="ir_a_practicar")],
+        [InlineKeyboardButton("📚 Regresar a estudiar otra cosa", callback_data="aprender_menu")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await query.edit_message_text(
+        texto,
+        reply_markup=reply_markup,
+        parse_mode="Markdown"
+    )
+
+async def ir_a_practicar(update, context):
+    query = update.callback_query
+    await query.answer()
+    
+    # Redirigir al menú de practicar
+    keyboard = [
+        [InlineKeyboardButton("🔴 Cazador", callback_data="prac_cazador"), InlineKeyboardButton("🟡 Guardián", callback_data="prac_guardian")],
+        [InlineKeyboardButton("🟢 Golpeador", callback_data="prac_golpeador"), InlineKeyboardButton("🟣 Buscador", callback_data="prac_buscador")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_text(
+        "🏋️ *MODO PRACTICAR* 🏋️\n\nElige la posición que quieres entrenar:",
+        reply_markup=reply_markup,
+        parse_mode="Markdown"
+    )
+
+async def aprender_menu(update, context):
+    query = update.callback_query
+    await query.answer()
+    
+    # Mostrar el menú de aprender nuevamente
+    keyboard = [
+        [InlineKeyboardButton("📜 Reglas generales", callback_data="aprender_general"), InlineKeyboardButton("🔴 Cazador", callback_data="aprender_cazador")],
+        [InlineKeyboardButton("🟡 Guardián", callback_data="aprender_guardian"), InlineKeyboardButton("🟢 Golpeador", callback_data="aprender_golpeador")],
+        [InlineKeyboardButton("🟣 Buscador", callback_data="aprender_buscador"), InlineKeyboardButton("⚡ Práctica rápida", callback_data="aprender_practica")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_text(
+        "📚 *CENTRO DE APRENDIZAJE*\n\nElige una opción:",
+        reply_markup=reply_markup,
+        parse_mode="Markdown"
+    )
 
 async def practicar(update, context):
     keyboard = [
@@ -258,9 +393,29 @@ async def practicar(update, context):
 async def practicar_cazador(update, context):
     query = update.callback_query
     await query.answer()
+    
     context.user_data['practica_activa'] = 'cazador'
     context.user_data['pases_cazador'] = 0
-    await query.edit_message_text("🔴 *PRÁCTICA DE CAZADOR*\n\nEscribe 'salir' para terminar.", parse_mode="Markdown")
+    context.user_data['pases_realizados'] = []
+    
+    keyboard = [[InlineKeyboardButton("❌ Salir de práctica", callback_data="salir_practica")]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(
+        "🔴 *PRÁCTICA DE CAZADOR* 🔴\n\n"
+        "📌 *Objetivo:* Realiza 4 pases y luego dispara.\n\n"
+        "📝 *Formato de pase:*\n"
+        "`❤️🏉@cazador2`\n"
+        "(Reemplaza 'cazador2' con el nombre del usuario)\n\n"
+        "🎯 *Formato de disparo:*\n"
+        "`❤️🏉🅰️123`\n"
+        "(Reemplaza '🅰️' por 🅰️, 🅱️ u 🅾️)\n\n"
+        "💡 *Ejemplo de pase:* `❤️🏉@cazador2`\n"
+        "💡 *Ejemplo de disparo:* `❤️🏉🅰️123`\n\n"
+        "⚡ *Escribe 'salir' para terminar.*",
+        reply_markup=reply_markup,
+        parse_mode="Markdown"
+    )
 
 async def practicar_guardian(update, context):
     query = update.callback_query
@@ -307,7 +462,8 @@ def main():
     app.add_handler(CallbackQueryHandler(practicar_buscador, pattern="prac_buscador"))
     app.add_handler(CallbackQueryHandler(salir_practica, pattern="salir_practica"))
     app.add_handler(CallbackQueryHandler(boton_aprender, pattern="aprender_"))
-    
+    app.add_handler(CallbackQueryHandler(ir_a_practicar, pattern="ir_a_practicar"))
+    app.add_handler(CallbackQueryHandler(aprender_menu, pattern="aprender_menu"))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, manejar_mensajes))
     
     print("🐲 Bot de Quidditch iniciado...")
