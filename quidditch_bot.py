@@ -339,7 +339,7 @@ async def boton_aprender(update, context):
     # Botones de acción al final
     keyboard = [
         [InlineKeyboardButton("🏋️ Ir a practicar", callback_data="ir_a_practicar")],
-        [InlineKeyboardButton("📚 Estudiar otra posicion", callback_data="menu_aprender")]
+        [InlineKeyboardButton("📚 Regresar al menú", callback_data="regresar")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -365,7 +365,7 @@ async def ir_a_practicar(update, context):
         parse_mode="Markdown"
     )
 
-async def aprender_menu(update, context):
+async def regresar_menu(update, context):
     query = update.callback_query
     await query.answer()
     
@@ -462,7 +462,7 @@ def main():
     app.add_handler(CallbackQueryHandler(salir_practica, pattern="salir_practica"))
     app.add_handler(CallbackQueryHandler(boton_aprender, pattern="aprender_"))
     app.add_handler(CallbackQueryHandler(ir_a_practicar, pattern="ir_a_practicar"))
-    app.add_handler(CallbackQueryHandler(aprender_menu, pattern="menu_aprender"))
+    app.add_handler(CallbackQueryHandler(regresar_menu, pattern="regresar"))
 
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, manejar_mensajes))
     
