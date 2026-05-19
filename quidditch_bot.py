@@ -99,7 +99,7 @@ async def start(update, context):
         await update.message.reply_text(
             f"¡Bienvenido de vuelta {usuario[1]}!\n"
             f"Casa: {usuario[2]}\n"
-            f"Cargo: {usuario[4]}\n\n"
+            f"Cargo: {usuario[5]}\n\n"
             "¿Qué deseas hacer?\n"
             "/aprender - Ver reglas del juego\n"
             "/practicar - Entrenar una posición\n"
@@ -624,6 +624,7 @@ async def practicar_cazador(update, context):
     )
 
 async def practicar_guardian(update, context):
+    print("🟢 DEBUG: Entré a practicar_guardian")
     query = update.callback_query
     await query.answer()
     
