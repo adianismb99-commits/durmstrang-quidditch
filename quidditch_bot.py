@@ -57,11 +57,12 @@ def defensa_numero(numero):
     }
     return tabla.get(numero, '❌')
 
-def generar_disparo_aleatorio(casa_usuario):
+#======== DISPARO ALEATORIO =======
+def generar_disparo_aleatorio():
     aros = ["🅰️", "🅱️", "🅾️"]
     aro = random.choice(aros)
     numeros = ''.join([str(random.randint(1, 9)) for _ in range(3)])
-    return casa_usuario, aro, numeros
+    return "🤍", aro, numeros  # Corazón blanco para el bot
 
 #=== GENERAR SECUENCIA DE SNITCH ===
 
@@ -88,10 +89,10 @@ async def start(update, context):
     
     if usuario is None:
         await update.message.reply_text(
-            f"✨ ¡Bienvenido {nombre} al Quidditch Emoji Bot! ✨\n\n"
+            f"✨ ¡Bienvenido {nombre} al Durmstrang's Quidditch! ✨\n\n"
             "Para comenzar, necesitas crear una cuenta.\n\n"
             "Comando: /crear_cuenta\n\n"
-            "Serás parte de una de las tres casas mágicas: Galkin ❤️, Darfor 💜 u Olsson 💚"
+            "Serás parte de una de las tres casas: Galkin ❤️, Darfor 💜 u Olsson 💚"
         )
     else:
         await update.message.reply_text(
@@ -99,9 +100,9 @@ async def start(update, context):
             f"Casa: {usuario[2]}\n"
             f"Cargo: {usuario[3]}\n\n"
             "¿Qué deseas hacer?\n"
+            "/aprender - Ver reglas del juego\n"
             "/practicar - Entrenar una posición\n"
-            "/jugar - Iniciar una partida\n"
-            "/aprender - Ver reglas del juego"
+            "/jugar - Iniciar una partida"
         )
 
 async def crear_cuenta(update, context):
@@ -147,7 +148,7 @@ async def manejar_mensajes(update, context):
                 await update.message.reply_text(
                     f"✅ Pase correcto. Llevas {pases_actuales} pases.\n\n"
                     f"🎯 ¡Ya puedes disparar! Usa el formato:\n"
-                    f"`❤️🏉🅰️123`\n\n"
+                    f"`🤍🏉🅰️123`\n\n"
                     f"(Recuerda: 3 números del 1 al 9)"
                 )
             else:
@@ -205,7 +206,7 @@ async def manejar_mensajes(update, context):
                 else:
                     await update.message.reply_text(
                         f"❌ Disparo inválido. Debes usar EXACTAMENTE 3 números (1-9).\n"
-                        f"Ejemplo: `❤️🏉🅰️123`\n"
+                        f"Ejemplo: `🤍🏉🅰️123`\n"
                         f"Tú usaste {len(numeros)} números: {''.join(numeros) if numeros else 'ninguno'}"
                     )
         
@@ -213,9 +214,9 @@ async def manejar_mensajes(update, context):
             await update.message.reply_text(
                 f"❌ Formato no reconocido.\n\n"
                 f"📝 **Formato de pase:**\n"
-                f"`❤️🏉@cazador2`\n\n"
+                f"`🤍🏉@cazador2`\n\n"
                 f"🎯 **Formato de disparo:**\n"
-                f"`❤️🏉🅰️123`\n\n"
+                f"`🤍🏉🅰️123`\n\n"
                 f"Escribe 'salir' para terminar."
             )
     
@@ -244,7 +245,7 @@ async def manejar_mensajes(update, context):
                 context.user_data['guardian_esperando_defensa'] = True
                 
                 # Generar primer disparo
-                casa, aro, numeros = generar_disparo_aleatorio(casa_usuario)
+                casa, aro, numeros = generar_disparo_aleatorio()  # casa = "🤍"
                 context.user_data['disparo_actual'] = {'casa': casa, 'aro': aro, 'numeros': numeros}
                 context.user_data['defensa_correcta'] = ''.join([defensa_numero(n) for n in numeros])
                 
@@ -257,7 +258,7 @@ async def manejar_mensajes(update, context):
                     f"📊 *TABLA DE CONVERSIÓN:*\n"
                     f"`{tabla}`\n\n"
                     f"📝 *Formato de defensa:*\n"
-                    f"`{casa_usuario}🧹{aro}⬆️⬇️➡️`\n\n"
+                    f"`{casa_usuario}🧹{aro}⬅️⬆️➡️`\n\n"
                     f"🛡️ *Escribe tu defensa (usa solo flechas):*",
                     parse_mode="Markdown"
                 )
@@ -274,11 +275,6 @@ async def manejar_mensajes(update, context):
         if context.user_data.get('guardian_esperando_defensa'):
             disparo = context.user_data.get('disparo_actual', {})
             defensa_correcta = context.user_data.get('defensa_correcta', '')
-
-                    # Defendiendo disparo actual
-            if context.user_data.get('guardian_esperando_defensa'):
-                disparo = context.user_data.get('disparo_actual', {})
-                defensa_correcta = context.user_data.get('defensa_correcta', '')
             
                 # ========== DIAGNÓSTICO ==========
                 #await update.message.reply_text(
@@ -311,11 +307,11 @@ async def manejar_mensajes(update, context):
             
             # Extraer aro del mensaje (aceptando múltiples variantes)
             aro_usado = None
-            if '🅰' in mensaje or '🅰️' in mensaje or 'A' in mensaje:
+            if '🅰' in mensaje or '🇦' in mensaje or '🅰️' in mensaje or 'A' in mensaje:
                 aro_usado = '🅰️'
-            elif '🅱' in mensaje or '🅱️' in mensaje or 'B' in mensaje:
+            elif '🅱' in mensaje or '🇧' in mensaje or '🅱️' in mensaje or 'B' in mensaje:
                 aro_usado = '🅱️'
-            elif '🅾' in mensaje or '🅾️' in mensaje or 'O' in mensaje:
+            elif '🅾' in mensaje or '🇴' in mensaje or '🅾️' in mensaje or 'O' in mensaje:
                 aro_usado = '🅾️'
             
             # Verificar que se usó la casa correcta del usuario (el emblema corazón)
@@ -356,7 +352,7 @@ async def manejar_mensajes(update, context):
                     )
                 
                 # Generar nuevo disparo
-                casa, aro, numeros = generar_disparo_aleatorio(casa_usuario)
+                casa, aro, numeros = generar_disparo_aleatorio()
                 context.user_data['disparo_actual'] = {'casa': casa, 'aro': aro, 'numeros': numeros}
                 context.user_data['defensa_correcta'] = ''.join([defensa_numero(n) for n in numeros])
                 
@@ -431,9 +427,9 @@ async def manejar_mensajes(update, context):
 
 async def aprender(update, context):
     keyboard = [
-        [InlineKeyboardButton("📜 Reglas generales", callback_data="aprender_general"), InlineKeyboardButton("🔴 Cazador", callback_data="aprender_cazador")],
+        [InlineKeyboardButton("🟣 Buscador", callback_data="aprender_buscador"), InlineKeyboardButton("🔴 Cazador", callback_data="aprender_cazador")],
         [InlineKeyboardButton("🟡 Guardián", callback_data="aprender_guardian"), InlineKeyboardButton("🟢 Golpeador", callback_data="aprender_golpeador")],
-        [InlineKeyboardButton("🟣 Buscador", callback_data="aprender_buscador")]
+        [InlineKeyboardButton("📜 Reglas generales", callback_data="aprender_general")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text("📚 *CENTRO DE APRENDIZAJE*\n\nElige una opción:", reply_markup=reply_markup, parse_mode="Markdown")
@@ -463,13 +459,13 @@ async def boton_aprender(update, context):
             "📌 *FUNCIÓN:* Los cazadores tendrán la tarea de pasarse la quaffle entre ellos y tirar a los aros para intentar anotar al contrario.\n\n"
             "🔄 *FORMATO DE PASE:*\n"
             "`[Emblema]🏉@cazador`\n"
-            "💡 *Ejemplo:* `💛🦡🏉@cazador`\n\n"
+            "💡 *Ejemplo:* `🤍🏉@cazador`\n\n"
             "🎯 *FORMATO DE DISPARO:*\n"
             "`[Emblema]🏉[Aro][3 números]`\n"
-            "💡 *Ejemplo:* `💛🦡🏉🅱️3️⃣7️⃣1️⃣`\n\n"
+            "💡 *Ejemplo:* `🤍🏉🅱️3️⃣7️⃣1️⃣`\n\n"
             "⚡ *PENALES:*\n"
             "`[Emblema]🏉[Aro][6 números]`\n"
-            "💡 *Ejemplo:* `💜🐍🏉🅱️5️⃣2️⃣1️⃣7️⃣8️⃣4️⃣`\n\n"
+            "💡 *Ejemplo:* `🤍🏉🅱️5️⃣2️⃣1️⃣7️⃣8️⃣4️⃣`\n\n"
             "⭕ *REGLAS:*\n"
             "• Estarán en juego un total de 3 cazadores con su respectivo suplente.\n"
             "• Deben realizar un mínimo de 4 pases y un máximo de 10 sin omitir a ningún cazador antes de disparar a los aros.\n"
@@ -487,15 +483,15 @@ async def boton_aprender(update, context):
             "• (7️⃣4️⃣6️⃣) → 🧹➡️\n\n"
             "📝 *NOTA:* Esta tabla el Guardián oficial se la debe aprender para el torneo de quidditch.\n\n"
             "🎯 *EJEMPLO DE DISPARO:*\n"
-            "`💙🦅🏉🅰️3️⃣7️⃣1️⃣`\n\n"
+            "`🤍🏉🅰️3️⃣7️⃣1️⃣`\n\n"
             "🛡️ *DEFENSA DEL GUARDIÁN:*\n"
-            "`💙🦅🧹🅰️⬆️➡️⬅️`\n\n"
+            "`🤍🧹🅰️⬆️➡️⬅️`\n\n"
             "⚡ *PENALES:*\n"
             "Un cazador realizará un disparo a cualquiera de los aros de 6 combinaciones de números.\n\n"
             "💡 *Ejemplo de disparo de penal:*\n"
-            "`💙🦅🏉🅾️4️⃣2️⃣8️⃣1️⃣9️⃣7️⃣`\n\n"
+            "`🤍🏉🅾️4️⃣2️⃣8️⃣1️⃣9️⃣7️⃣`\n\n"
             "🛡️ *Defensa para penal:*\n"
-            "`💙🦅🧹🅾️➡️⬅️⬆️⬅️⬆️➡️`\n\n"
+            "`🤍🧹🅾️➡️⬅️⬆️⬅️⬆️➡️`\n\n"
             "⭕ *REGLAS:*\n"
             "• Cualquier fallo tanto en combinación como en emojis a la hora de defender será considerado tiro efectivo.\n"
             "• Tendrá un máximo de 5 segundos para efectuar la correcta defensa.\n\n"
@@ -507,7 +503,7 @@ async def boton_aprender(update, context):
             "📌 *FUNCIÓN:* Será un golpeador que contará con la misión de golpear a tanto cazadores como al guardián del equipo contrario y a su vez defender a su equipo de los golpes.\n\n"
             "⚔️ *FORMATO DE GOLPE:*\n"
             "`[Emblema]🏏💥[3 números]@cazador`\n"
-            "💡 *Ejemplo:* `💚🐍🏏💥9️⃣5️⃣7️⃣@cazador`\n\n"
+            "💡 *Ejemplo:* `🤍🏏💥9️⃣5️⃣7️⃣@cazador`\n\n"
             "🛡️ *FORMATO DE DEFENSA:*\n"
             "`[Emblema]🧹[3 flechas según tabla]🏏❌`\n\n"
             "📊 *TABLA PARA DEFENDER GOLPES:*\n"
@@ -515,7 +511,7 @@ async def boton_aprender(update, context):
             "• (8️⃣9️⃣3️⃣) → 🧹⬆️\n"
             "• (7️⃣4️⃣6️⃣) → 🧹➡️\n\n"
             "💡 *Ejemplo de defensa:*\n"
-            "`💚🐍🧹⬆️⬅️➡️🏏❌`\n\n"
+            "`🤍🧹⬆️⬅️➡️🏏❌`\n\n"
             "⭕ *REGLAS:*\n"
             "• Sólo tienen permitido golpear a los cazadores y al respectivo guardián del equipo contrario y cada golpeador podrá golpear una vez por ronda.\n"
             "• En caso de que el golpe al guardián sea efectivo y fuera efectuado durante el tiro al aro, si el golpeador contrario no defiende en el tiempo requerido (5 segundos) a pesar de la defensa del guardián se considerará un golpe especial que determinará un tiro efectivo a favor del equipo golpeador.\n"
@@ -534,7 +530,7 @@ async def boton_aprender(update, context):
             "🔍 *Formato de respuesta del buscador:*\n"
             "`[Emblema][Escoba][🖐🏻][🔅✊🏻][secuencia de flechas]`\n\n"
             "💡 *Ejemplo:*\n"
-            "`❤️🦁🧹🖐🏻⬆️⬇️➡️⬅️⬆️⬆️⬇️🔅✊🏻`\n\n"
+            "`🤍🧹🖐🏻⬆️⬇️➡️⬅️⬆️⬆️⬇️🔅✊🏻`\n\n"
             "🏆 *Gana la snitch* el buscador que atrape más rápido y bien la snitch.\n\n"
             "🏰💫🏰💫🏰💫🏰💫🏰💫🏰"
         ),
@@ -576,9 +572,9 @@ async def regresar_menu(update, context):
     await query.answer()
     
     keyboard = [
-        [InlineKeyboardButton("📜 Reglas generales", callback_data="aprender_general"), InlineKeyboardButton("🔴 Cazador", callback_data="aprender_cazador")],
+        [InlineKeyboardButton("🟣 Buscador", callback_data="aprender_buscador"), InlineKeyboardButton("🔴 Cazador", callback_data="aprender_cazador")],
         [InlineKeyboardButton("🟡 Guardián", callback_data="aprender_guardian"), InlineKeyboardButton("🟢 Golpeador", callback_data="aprender_golpeador")],
-        [InlineKeyboardButton("🟣 Buscador", callback_data="aprender_buscador")]
+        [InlineKeyboardButton("📜 Reglas generales", callback_data="aprender_general")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await query.edit_message_text(
@@ -610,13 +606,13 @@ async def practicar_cazador(update, context):
         "🔴 *PRÁCTICA DE CAZADOR* 🔴\n\n"
         "📌 *Objetivo:* Realiza 4 pases y luego dispara.\n\n"
         "📝 *Formato de pase:*\n"
-        "`❤️🏉@cazador2`\n"
+        "`🤍🏉@cazador2`\n"
         "(Reemplaza 'cazador2' con el nombre del usuario)\n\n"
         "🎯 *Formato de disparo:*\n"
-        "`❤️🏉🅰️123`\n"
+        "`🤍🏉🅰️123`\n"
         "(Reemplaza '🅰️' por 🅰️, 🅱️ u 🅾️)\n\n"
-        "💡 *Ejemplo de pase:* `❤️🏉@cazador2`\n"
-        "💡 *Ejemplo de disparo:* `❤️🏉🅰️123`\n\n"
+        "💡 *Ejemplo de pase:* `🤍🏉@cazador2`\n"
+        "💡 *Ejemplo de disparo:* `🤍🏉🅰️123`\n\n"
         "⚡ *Escribe 'salir' para terminar.*",
         reply_markup=reply_markup,
         parse_mode="Markdown"
@@ -655,15 +651,15 @@ async def practicar_guardian(update, context):
         f"🏠 *Tu casa:* {casa_usuario}\n"
         "📌 *Recuerda usar siempre tu casa en la defensa.*\n\n"
         "📊 *TABLA DE NÚMEROS A FLECHAS:*\n"
-        "`1⬅️ 2⬅️ 3⬆️ 4➡️ 5⬅️ 6➡️ 7➡️ 8⬆️ 9⬆️`\n\n"
+        "(2️⃣5️⃣1️⃣) → ⬅️\n(8️⃣9️⃣3️⃣) → ⬆️\n(7️⃣4️⃣6️⃣) → ➡️\n\n"
         "📝 *Formato de defensa:*\n"
         f"`{casa_usuario}🧹[Aro][3 flechas]`\n\n"
         "💡 *Ejemplo:*\n"
-        "Si el disparo es: `❤️🏉🅰️123`\n"
-        "La defensa correcta sería: `❤️🧹🅰️⬅️⬅️⬆️`\n\n"
+        "Si el disparo es: `🤍🏉🅰️123`\n"
+        "La defensa correcta sería: `🤍🧹🅰️⬅️⬅️⬆️`\n\n"
         "⚡ *Variantes permitidas:*\n"
-        "• Aros: `🅰️`, `🅰`, `A` | `🅱️`, `🅱`, `B` | `🅾️`, `🅾`, `O`\n"
-        "• Flechas: `⬆️`, `⬇️`, `➡️`, `⬅️`\n\n"
+        "• Aros: `🅰️` | `🅱️` | `🅾️`\n"
+        "• Flechas: `⬆️`, `➡️`, `⬅️`\n\n"
         "⚡ *Escribe 'si' cuando estés listo.*\n"
         "⚡ *Escribe 'salir' para terminar.*",
         reply_markup=reply_markup,
