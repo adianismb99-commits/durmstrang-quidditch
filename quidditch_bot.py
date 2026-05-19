@@ -244,7 +244,10 @@ async def manejar_mensajes(update, context):
                 f"📊 *Estadísticas:*\n"
                 f"• Aciertos: {aciertos}\n"
                 f"• Fallos: {fallos}\n\n"
-                f"Usa /practicar para volver a entrenar.",
+                f"¿Qué deseas hacer?\n"
+                f"/aprender - Ver reglas del juego\n"
+                f"/practicar- Entrenar otra posición\n"
+                f"/jugar - Iniciar una partida"
                 parse_mode="Markdown"
             )
             return
