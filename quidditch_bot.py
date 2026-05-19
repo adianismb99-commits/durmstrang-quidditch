@@ -381,7 +381,7 @@ async def manejar_mensajes(update, context):
             tiene_escoba = '🧹' in mensaje
             
             # Validar defensa
-            if len(flechas_str) == 3 and aro_usado == disparo.get('aro') and casa_usada == emblema_usuario and tiene_escoba:
+            if len(flechas_str) == 6 and aro_usado == disparo.get('aro') and casa_usada == emblema_usuario and tiene_escoba:
                 if flechas_str == defensa_correcta:
                     aciertos = context.user_data.get('guardian_aciertos', 0) + 1
                     context.user_data['guardian_aciertos'] = aciertos
