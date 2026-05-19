@@ -40,6 +40,7 @@ def iniciar_bd():
             id_telegram INTEGER PRIMARY KEY,
             nombre TEXT,
             casa TEXT,
+            emblema TEXT,
             cargo TEXT,
             puntos_totales INTEGER DEFAULT 0,
             fecha_registro TIMESTAMP
@@ -98,7 +99,7 @@ async def start(update, context):
         await update.message.reply_text(
             f"¡Bienvenido de vuelta {usuario[1]}!\n"
             f"Casa: {usuario[2]}\n"
-            f"Cargo: {usuario[3]}\n\n"
+            f"Cargo: {usuario[4]}\n\n"
             "¿Qué deseas hacer?\n"
             "/aprender - Ver reglas del juego\n"
             "/practicar - Entrenar una posición\n"
@@ -223,6 +224,7 @@ async def manejar_mensajes(update, context):
     elif practica == 'guardian':
         mensaje = update.message.text
         casa_usuario = context.user_data.get('casa_usuario', '❤️')
+        emblema_usuario = context.user_data.get('emblema_usuario', '❤️')
         
         if mensaje.lower() == 'salir':
             aciertos = context.user_data.get('guardian_aciertos', 0)
@@ -258,7 +260,7 @@ async def manejar_mensajes(update, context):
                     f"📊 *TABLA DE CONVERSIÓN:*\n"
                     f"`{tabla}`\n\n"
                     f"📝 *Formato de defensa:*\n"
-                    f"`{casa_usuario}🧹{aro}⬅️⬆️➡️`\n\n"
+                    f"`{emblema_usuario}🧹{aro}⬅️⬆️➡️`\n\n"
                     f"🛡️ *Escribe tu defensa (usa solo flechas):*",
                     parse_mode="Markdown"
                 )
@@ -284,10 +286,10 @@ async def manejar_mensajes(update, context):
                 f"`{list(mensaje)}`\n\n"
                 f"*Lo que esperaba:*\n"
                 f"Defensa correcta: `{disparo.get('casa')}🧹{disparo.get('aro')}{defensa_correcta}`\n\n"
-                f"*Tu casa debería ser:* {casa_usuario}\n"
+                f"*Tu casa debería ser:* {emblema_usuario}\n"
                 f"*Aro del disparo:* {disparo.get('aro')}\n\n"
                 f"📝 *Escribe exactamente:*\n"
-                f"`{casa_usuario}🧹{disparo.get('aro')}{defensa_correcta}`",
+                f"`{emblema_usuario}🧹{disparo.get('aro')}{defensa_correcta}`",
                 parse_mode="Markdown"
                 )
             return  # Salimos para no procesar más
@@ -316,17 +318,17 @@ async def manejar_mensajes(update, context):
             
             # Verificar que se usó la casa correcta del usuario (el emblema corazón)
             casa_usada = None
-            if casa_usuario == '❤️' and '❤️' in mensaje:
+            if emblema_usuario == '❤️' and '❤️' in mensaje:
                 casa_usada = '❤️'
-            elif casa_usuario == '💜' and '💜' in mensaje:
+            elif emblema_usuario == '💜' and '💜' in mensaje:
                 casa_usada = '💜'
-            elif casa_usuario == '💚' and '💚' in mensaje:
+            elif emblema_usuario == '💚' and '💚' in mensaje:
                 casa_usada = '💚'
             
             tiene_escoba = '🧹' in mensaje
             
             # Validar defensa
-            if len(flechas_str) == 3 and aro_usado == disparo.get('aro') and casa_usada == casa_usuario and tiene_escoba:
+            if len(flechas_str) == 3 and aro_usado == disparo.get('aro') and casa_usada == emblema_usuario and tiene_escoba:
                 if flechas_str == defensa_correcta:
                     aciertos = context.user_data.get('guardian_aciertos', 0) + 1
                     context.user_data['guardian_aciertos'] = aciertos
@@ -363,14 +365,14 @@ async def manejar_mensajes(update, context):
                     f"`{casa}🏉{aro}{numeros}`\n\n"
                     f"📊 *TABLA DE CONVERSIÓN:*\n"
                     f"`{tabla}`\n\n"
-                    f"🛡️ *Escribe tu defensa (usa tu casa {casa_usuario} y escoba 🧹):*",
+                    f"🛡️ *Escribe tu defensa (usa tu emblema {emblema_usuario} y escoba 🧹):*",
                     parse_mode="Markdown"
                 )
             else:
                 # Mensaje de error con recordatorios
                 errores = []
-                if casa_usada != casa_usuario:
-                    errores.append(f"• Usa el emblema de tu casa {casa_usuario}")
+                if casa_usada != emblema_usuario:
+                    errores.append(f"• Usa el emblema de tu casa {emblema_usuario}")
                 if not tiene_escoba:
                     errores.append("• Falta la escoba `🧹`")
                 if aro_usado != disparo.get('aro'):
@@ -390,7 +392,7 @@ async def manejar_mensajes(update, context):
                     f"📊 *TABLA DE CONVERSIÓN:*\n"
                     f"`{tabla}`\n\n"
                     f"📝 *Formato correcto:*\n"
-                    f"`{casa_usuario}🧹{disparo.get('aro')}⬆️⬇️➡️`\n\n"
+                    f"`{emblema_usuario}🧹{disparo.get('aro')}⬆️⬇️➡️`\n\n"
                     f"🛡️ *Intenta de nuevo con el mismo disparo:*",
                     parse_mode="Markdown"
                 )
@@ -401,20 +403,23 @@ async def manejar_mensajes(update, context):
         if casa in ["Galkin", "Darfor", "Olsson"]:
             user_id = update.effective_user.id
             nombre = update.effective_user.first_name
-            
+        
+            # Convertir nombre de casa a emoji
+            emblema_usuario = "❤️" if casa == "Galkin" else "💜" if casa == "Darfor" else "💚"
+        
             conn = sqlite3.connect('quidditch.db')
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO usuarios (id_telegram, nombre, casa, cargo, fecha_registro) VALUES (?, ?, ?, ?, ?)",
-                (user_id, nombre, casa, "Estudiante", datetime.now())
+                "INSERT INTO usuarios (id_telegram, nombre, casa, emblema, cargo, puntos_totales, fecha_registro) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (user_id, nombre, casa, emblema_usuario, "Estudiante", 0, datetime.now())
             )
             conn.commit()
             conn.close()
-            
+        
             await update.message.reply_text(
                 f"✅ ¡Cuenta creada!\n\n"
                 f"Nombre: {nombre}\n"
-                f"Casa: {casa}\n"
+                f"Casa: {casa} {emblema_usuario}\n"
                 f"Cargo: Estudiante\n\n"
                 "Ahora escribe /start para comenzar."
             )
@@ -627,13 +632,16 @@ async def practicar_guardian(update, context):
     # Obtener la casa del usuario desde la base de datos
     conn = sqlite3.connect('quidditch.db')
     cursor = conn.cursor()
-    cursor.execute("SELECT casa FROM usuarios WHERE id_telegram = ?", (user_id,))
+    cursor.execute("SELECT casa, emblema FROM usuarios WHERE id_telegram = ?", (user_id,))
     resultado = cursor.fetchone()
     conn.close()
-    casa_usuario = resultado[0] if resultado else "❤️"
 
-    # Guardar la casa del usuario
+    casa_usuario = resultado[0] if resultado else "Galkin"  # Texto: "Galkin", "Darfor", "Olsson"
+    emblema_usuario = resultado[1] if resultado else "❤️"   # Emoji: "❤️", "💜", "💚"
+
+    # Guardar ambos en el contexto
     context.user_data['casa_usuario'] = casa_usuario
+    context.user_data['emblema_usuario'] = emblema_usuario
     
     # Guardar que el usuario está en práctica de guardián
     context.user_data['practica_activa'] = 'guardian'
@@ -648,20 +656,20 @@ async def practicar_guardian(update, context):
     # Mostrar la casa que debe usar
     await query.edit_message_text(
         "🟡 *PRÁCTICA DE GUARDIÁN* 🟡\n\n"
-        f"🏠 *Tu casa:* {casa_usuario}\n"
-        "📌 *Recuerda usar siempre tu casa en la defensa.*\n\n"
+        f"🏠 *Tu casa:* {emblema_usuario}{casa_usuario}\n"
+        "📌 *Recuerda usar siempre tu emblema en la defensa.*\n\n"
         "📊 *TABLA DE NÚMEROS A FLECHAS:*\n"
         "(2️⃣5️⃣1️⃣) → ⬅️\n(8️⃣9️⃣3️⃣) → ⬆️\n(7️⃣4️⃣6️⃣) → ➡️\n\n"
         "📝 *Formato de defensa:*\n"
-        f"`{casa_usuario}🧹[Aro][3 flechas]`\n\n"
+        f"`{emblema_usuario}🧹[Aro][3 flechas]`\n\n"
         "💡 *Ejemplo:*\n"
         "Si el disparo es: `🤍🏉🅰️123`\n"
-        "La defensa correcta sería: `🤍🧹🅰️⬅️⬅️⬆️`\n\n"
+        f"La defensa correcta en tu caso sería: `{emblema_usuario}🧹🅰️⬅️⬅️⬆️`\n\n"
         "⚡ *Variantes permitidas:*\n"
         "• Aros: `🅰️` | `🅱️` | `🅾️`\n"
-        "• Flechas: `⬆️`, `➡️`, `⬅️`\n\n"
-        "⚡ *Escribe 'si' cuando estés listo.*\n"
-        "⚡ *Escribe 'salir' para terminar.*",
+        "• Flechas: `⬅️`, `⬆️`, `➡️`\n\n"
+        "⚡ *Escribe 'Si' cuando estés listo.*\n"
+        "⚡ *Escribe 'Salir' para terminar.*",
         reply_markup=reply_markup,
         parse_mode="Markdown"
     )
