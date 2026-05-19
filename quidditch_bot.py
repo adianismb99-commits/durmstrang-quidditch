@@ -325,7 +325,6 @@ async def manejar_mensajes(update, context):
             
             # Línea de depuración (la puedes borrar después)
             print(f"DEBUG: flechas_str = '{flechas_str}', longitud = {len(flechas_str)}")
-```
             
             # Mostrar las flechas que se extrajeron
             await update.message.reply_text(
@@ -360,7 +359,6 @@ async def manejar_mensajes(update, context):
             
             # Línea de depuración (la puedes borrar después)
             print(f"DEBUG: flechas_str = '{flechas_str}', longitud = {len(flechas_str)}")
-```
             
             # Extraer aro del mensaje (aceptando múltiples variantes)
             aro_usado = None
