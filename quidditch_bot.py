@@ -287,20 +287,49 @@ async def manejar_mensajes(update, context):
             disparo = context.user_data.get('disparo_actual', {})
             defensa_correcta = context.user_data.get('defensa_correcta', '')
             
-                # ========== DIAGNÓSTICO ==========
+            # ========== DIAGNÓSTICO PROFUNDO ==========
+            # Mostrar el mensaje original
             await update.message.reply_text(
                 f"🔍 *DIAGNÓSTICO - LO QUE RECIBÍ:*\n"
                 f"`{mensaje}`\n\n"
                 f"*Contenido del mensaje (caracter a caracter):*\n"
                 f"`{list(mensaje)}`\n\n"
+                f"*Códigos Unicode de cada caracter:*\n"
+                f"`{[hex(ord(c)) for c in mensaje]}`\n\n"
                 f"*Lo que esperaba:*\n"
                 f"Defensa correcta: `{disparo.get('casa')}🧹{disparo.get('aro')}{defensa_correcta}`\n\n"
                 f"*Tu casa debería ser:* {emblema_usuario}\n"
                 f"*Aro del disparo:* {disparo.get('aro')}\n\n"
-                f"📝 *Escribe exactamente:*\n"
+                f"*Flechas correctas:* {defensa_correcta}\n\n"
+                f"📝 *Escribe exactamente (copia y pega esto):*\n"
                 f"`{emblema_usuario}🧹{disparo.get('aro')}{defensa_correcta}`",
                 parse_mode="Markdown"
-                )
+            )
+            
+            # Extraer flechas del mensaje (para diagnóstico)
+            flechas_map = {
+                '⬆️': '⬆️', '⬆': '⬆️', '↑': '⬆️',
+                '⬇️': '⬇️', '⬇': '⬇️', '↓': '⬇️',
+                '➡️': '➡️', '➡': '➡️', '→': '➡️',
+                '⬅️': '⬅️', '⬅': '⬅️', '←': '⬅️'
+            }
+            flechas_encontradas = []
+            for char in mensaje:
+                if char in flechas_map:
+                    flechas_encontradas.append(flechas_map[char])
+            flechas_str = ''.join(flechas_encontradas)
+            
+            # Mostrar las flechas que se extrajeron
+            await update.message.reply_text(
+                f"🔍 *EXTRACCIÓN DE FLECHAS:*\n"
+                f"Flechas encontradas: `{flechas_str}`\n"
+                f"Longitud: {len(flechas_str)} de 3 esperadas\n\n"
+                f"Comparación:\n"
+                f"Tus flechas: `{flechas_str}`\n"
+                f"Flechas correctas: `{defensa_correcta}`\n"
+                f"¿Coinciden? {'✅ SÍ' if flechas_str == defensa_correcta else '❌ NO'}",
+                parse_mode="Markdown"
+            )
             return  # Salimos para no procesar más
             
             # ========== EXTRAER FLECHAS (MÚLTIPLES VARIANTES) ==========
