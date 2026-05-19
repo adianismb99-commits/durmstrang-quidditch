@@ -315,9 +315,17 @@ async def manejar_mensajes(update, context):
             }
             flechas_encontradas = []
             for char in mensaje:
-                if char in flechas_map:
+                # Normalizar el carácter para eliminar variantes invisibles
+                normalizado = unicodedata.normalize('NFKC', char)
+                if normalizado in flechas_map:
+                    flechas_encontradas.append(flechas_map[normalizado])
+                elif char in flechas_map:
                     flechas_encontradas.append(flechas_map[char])
             flechas_str = ''.join(flechas_encontradas)
+            
+            # Línea de depuración (la puedes borrar después)
+            print(f"DEBUG: flechas_str = '{flechas_str}', longitud = {len(flechas_str)}")
+```
             
             # Mostrar las flechas que se extrajeron
             await update.message.reply_text(
