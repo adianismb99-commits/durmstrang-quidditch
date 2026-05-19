@@ -35,6 +35,8 @@ def run_web():
 def iniciar_bd():
     conn = sqlite3.connect('quidditch.db')
     cursor = conn.cursor()
+    
+    # Crear tabla con la nueva estructura (incluyendo emblema)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS usuarios (
             id_telegram INTEGER PRIMARY KEY,
@@ -46,6 +48,13 @@ def iniciar_bd():
             fecha_registro TIMESTAMP
         )
     ''')
+    
+    # Si la tabla ya existía sin la columna emblema, la agregamos
+    try:
+        cursor.execute("ALTER TABLE usuarios ADD COLUMN emblema TEXT DEFAULT '❤️'")
+    except sqlite3.OperationalError:
+        pass  # La columna ya existe, no pasa nada
+    
     conn.commit()
     conn.close()
 
@@ -99,7 +108,7 @@ async def start(update, context):
         await update.message.reply_text(
             f"¡Bienvenido de vuelta {usuario[1]}!\n"
             f"Casa: {usuario[2]}\n"
-            f"Cargo: {usuario[5]}\n\n"
+            f"Cargo: {usuario[3]}\n\n"
             "¿Qué deseas hacer?\n"
             "/aprender - Ver reglas del juego\n"
             "/practicar - Entrenar una posición\n"
