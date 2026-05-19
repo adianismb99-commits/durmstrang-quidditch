@@ -330,7 +330,7 @@ async def manejar_mensajes(update, context):
                 f"¿Coinciden? {'✅ SÍ' if flechas_str == defensa_correcta else '❌ NO'}",
                 parse_mode="Markdown"
             )
-            return  # Salimos para no procesar más
+            #return  # Salimos para no procesar más
             
             # ========== EXTRAER FLECHAS (MÚLTIPLES VARIANTES) ==========
             flechas_map = {
