@@ -318,9 +318,9 @@ async def manejar_mensajes(update, context):
                 # Normalizar el carácter para eliminar variantes invisibles
              #   normalizado = unicodedata.normalize('NFKC', char)
              #   if normalizado in flechas_map:
-                    flechas_encontradas.append(flechas_map[normalizado])
+                    #flechas_encontradas.append(flechas_map[normalizado])
              #   elif char in flechas_map:
-       flechas_encontradas.append(flechas_map[char])
+       #flechas_encontradas.append(flechas_map[char])
           #  flechas_str = ''.join(flechas_encontradas)
             
             # Línea de depuración (la puedes borrar después)
