@@ -458,38 +458,6 @@ async def manejar_mensajes(update, context):
                     parse_mode="Markdown"
                 )
             return
-    
-    elif context.user_data.get('esperando_casa'):
-        casa = update.message.text
-        if casa in ["Galkin", "Darfor", "Olsson"]:
-            user_id = update.effective_user.id
-            nombre = update.effective_user.first_name
-        
-            # Convertir nombre de casa a emoji
-            emblema_usuario = "❤️" if casa == "Galkin" else "💜" if casa == "Darfor" else "💚"
-        
-            conn = sqlite3.connect('quidditch.db')
-            cursor = conn.cursor()
-            cursor.execute(
-                "INSERT INTO usuarios (id_telegram, nombre, casa, emblema, cargo, puntos_totales, fecha_registro) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (user_id, nombre, casa, emblema_usuario, "Estudiante", 0, datetime.now())
-            )
-            conn.commit()
-            conn.close()
-        
-            await update.message.reply_text(
-                f"✅ ¡Cuenta creada!\n\n"
-                f"Nombre: {nombre}\n"
-                f"Casa: {casa} {emblema_usuario}\n"
-                f"Cargo: Estudiante\n\n"
-                "Ahora escribe /start para comenzar."
-            )
-            context.user_data['esperando_casa'] = False
-        else:
-            await update.message.reply_text("Casa no válida. Elige: Galkin, Darfor u Olsson")
-    
-    else:
-        await update.message.reply_text("Usa /start para comenzar o /crear_cuenta para registrarte")
 
 #===========]]\$}=¢}`§=¥°=¥[¢\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -665,6 +633,38 @@ async def manejar_mensajes(update, context):
                 f"Escribe *'salir'* para terminar.",
                 parse_mode="Markdown"
             )
+    
+    elif context.user_data.get('esperando_casa'):
+        casa = update.message.text
+        if casa in ["Galkin", "Darfor", "Olsson"]:
+            user_id = update.effective_user.id
+            nombre = update.effective_user.first_name
+        
+            # Convertir nombre de casa a emoji
+            emblema_usuario = "❤️" if casa == "Galkin" else "💜" if casa == "Darfor" else "💚"
+        
+            conn = sqlite3.connect('quidditch.db')
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO usuarios (id_telegram, nombre, casa, emblema, cargo, puntos_totales, fecha_registro) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (user_id, nombre, casa, emblema_usuario, "Estudiante", 0, datetime.now())
+            )
+            conn.commit()
+            conn.close()
+        
+            await update.message.reply_text(
+                f"✅ ¡Cuenta creada!\n\n"
+                f"Nombre: {nombre}\n"
+                f"Casa: {casa} {emblema_usuario}\n"
+                f"Cargo: Estudiante\n\n"
+                "Ahora escribe /start para comenzar."
+            )
+            context.user_data['esperando_casa'] = False
+        else:
+            await update.message.reply_text("Casa no válida. Elige: Galkin, Darfor u Olsson")
+    
+    else:
+        await update.message.reply_text("Usa /start para comenzar o /crear_cuenta para registrarte")
 
 async def aprender(update, context):
     keyboard = [
