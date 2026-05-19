@@ -465,7 +465,6 @@ async def manejar_mensajes(update, context):
         mensaje = update.message.text
         emblema_usuario = context.user_data.get('emblema_usuario', '❤️')
     
-        # Salir
         if mensaje.lower() == 'salir':
             aciertos = context.user_data.get('golpeador_aciertos', 0)
             fallos = context.user_data.get('golpeador_fallos', 0)
@@ -483,72 +482,54 @@ async def manejar_mensajes(update, context):
             )
             return
     
-        # Elegir modo: atacar o defender
+        # Elegir modo
         if mensaje.lower() == 'atacar':
             context.user_data['golpeador_modo'] = 'atacar'
-            context.user_data['golpeador_esperando_defensa'] = False
-        
-            # Generar números para el ataque
-            numeros = generar_golpe_aleatorio()
-            context.user_data['golpe_actual'] = numeros
-            defensa_correcta = ''.join([defensa_numero(n) for n in numeros])
-            context.user_data['defensa_correcta_golpe'] = defensa_correcta
-        
+            context.user_data['golpeador_esperando'] = True
             await update.message.reply_text(
                 f"⚔️ *PREPARA TU ATAQUE!* ⚔️\n\n"
                 f"📝 *Escribe tu golpe con este formato:*\n"
-                f"`{emblema_usuario}🏏💥{numeros}@DurmstrangQuidditchBot`\n\n"
-                f"📊 *Los números son:* {numeros}\n"
-                f"🛡️ *Defensa correcta:* {defensa_correcta}\n\n"
+                f"`{emblema_usuario}🏏💥123@DurmstrangQuidditchBot`\n\n"
+                f"(Reemplaza '123' por 3 números de tu elección)\n\n"
                 f"⚡ *Escribe tu ataque:*",
                 parse_mode="Markdown"
             )
-            context.user_data['golpeador_esperando_defensa'] = True
             return
     
         elif mensaje.lower() == 'defender':
+            # Bot ataca con números aleatorios
+            numeros_bot = ''.join([str(random.randint(1, 9)) for _ in range(3)])
             context.user_data['golpeador_modo'] = 'defender'
-            context.user_data['golpeador_esperando_defensa'] = False
-        
-            # Bot ataca al usuario
-            numeros = generar_golpe_aleatorio()
-            context.user_data['golpe_actual'] = numeros
-            defensa_correcta = ''.join([defensa_numero(n) for n in numeros])
-            context.user_data['defensa_correcta_golpe'] = defensa_correcta
-        
-            tabla = "(2️⃣5️⃣1️⃣) → ⬅️\n(8️⃣9️⃣3️⃣) → ⬆️\n(7️⃣4️⃣6️⃣) → ➡️"
+            context.user_data['numeros_bot'] = numeros_bot
+            context.user_data['golpeador_esperando'] = True
         
             await update.message.reply_text(
                 f"💥 *¡EL BOT TE ATACA!* 💥\n\n"
-                f"🔢 *Números del golpe:* {numeros}\n\n"
-                f"📊 *TABLA DE CONVERSIÓN:*\n"
-                f"`{tabla}`\n\n"
+                f"🔢 *Números del golpe:* {numeros_bot}\n\n"
                 f"🛡️ *Escribe tu defensa con este formato:*\n"
-                f"`{emblema_usuario}🧹{defensa_correcta}🏏❌`\n\n"
+                f"`{emblema_usuario}🧹[3 flechas]🏏❌`\n\n"
+                f"📊 *TABLA DE CONVERSIÓN:*\n"
+                f"(2️⃣5️⃣1️⃣) → ⬅️\n(8️⃣9️⃣3️⃣) → ⬆️\n(7️⃣4️⃣6️⃣) → ➡️\n\n"
                 f"⚡ *Escribe tu defensa:*",
                 parse_mode="Markdown"
             )
-            context.user_data['golpeador_esperando_defensa'] = True
             return
     
         # Procesar ataque o defensa
-        if context.user_data.get('golpeador_esperando_defensa'):
+        if context.user_data.get('golpeador_esperando'):
             modo = context.user_data.get('golpeador_modo')
-            numeros_correctos = context.user_data.get('golpe_actual', '')
-            defensa_correcta = context.user_data.get('defensa_correcta_golpe', '')
         
             if modo == 'atacar':
-                # Verificar formato de ataque: [Emblema]🏏💥[3 números]@rival
-                if f'🏏💥' in mensaje and '@' in mensaje:
-                    numeros_encontrados = re.findall(r'[1-9]', mensaje)
-                    if len(numeros_encontrados) == 3 and ''.join(numeros_encontrados) == numeros_correctos:
-                        # Ataque exitoso
+                # Verificar formato de ataque
+                if emblema_usuario in mensaje and '🏏💥' in mensaje and '@DurmstrangQuidditchBot' in mensaje:
+                    numeros = re.findall(r'[1-9]', mensaje)
+                    if len(numeros) == 3:
+                        # Ataque válido
                         aciertos = context.user_data.get('golpeador_aciertos', 0) + 1
                         context.user_data['golpeador_aciertos'] = aciertos
                         await update.message.reply_text(
                             f"✅ *¡GOLPE EXITOSO!*\n\n"
                             f"Tu ataque: {mensaje}\n"
-                            f"El bot no pudo defender.\n\n"
                             f"📊 *Aciertos:* {aciertos} | *Fallos:* {context.user_data.get('golpeador_fallos', 0)}",
                             parse_mode="Markdown"
                         )
@@ -557,21 +538,22 @@ async def manejar_mensajes(update, context):
                         context.user_data['golpeador_fallos'] = fallos
                         await update.message.reply_text(
                             f"❌ *¡GOLPE FALLIDO!*\n\n"
-                            f"Tu ataque: {mensaje}\n"
-                            f"Formato correcto: `{emblema_usuario}🏏💥{numeros_correctos}@DurmstrangQuidditchBot`\n\n"
+                            f"Debes usar EXACTAMENTE 3 números (1-9).\n"
                             f"📊 *Aciertos:* {context.user_data.get('golpeador_aciertos', 0)} | *Fallos:* {fallos}",
                             parse_mode="Markdown"
                         )
                 else:
+                    fallos = context.user_data.get('golpeador_fallos', 0) + 1
+                    context.user_data['golpeador_fallos'] = fallos
                     await update.message.reply_text(
                         f"❌ *Formato de ataque incorrecto.*\n\n"
                         f"📝 *Formato correcto:*\n"
-                        f"`{emblema_usuario}🏏💥{numeros_correctos}@DurmstrangQuidditchBot`",
+                        f"`{emblema_usuario}🏏💥123@DurmstrangQuidditchBot`\n\n"
+                        f"📊 *Aciertos:* {context.user_data.get('golpeador_aciertos', 0)} | *Fallos:* {fallos}",
                         parse_mode="Markdown"
                     )
-                    return
             
-                context.user_data['golpeador_esperando_defensa'] = False
+                context.user_data['golpeador_esperando'] = False
                 await update.message.reply_text(
                     f"⚡ *¿Qué deseas hacer ahora?*\n"
                     f"Escribe *'atacar'* para otro golpe.\n"
@@ -581,42 +563,47 @@ async def manejar_mensajes(update, context):
                 )
         
             elif modo == 'defender':
-                # Verificar formato de defensa: [Emblema]🧹[3 flechas]🏏❌
-                if '🧹' in mensaje and '🏏❌' in mensaje:
-                    flechas_encontradas = re.findall(r'[⬆️⬇️➡️⬅️]', mensaje)
-                    flechas_str = ''.join(flechas_encontradas)
+                # Verificar formato de defensa
+                if emblema_usuario in mensaje and '🧹' in mensaje and '🏏❌' in mensaje:
+                    flechas = re.findall(r'[⬆️➡️⬅️]', mensaje)
+                    flechas_str = ''.join(flechas)
                 
-                    if len(flechas_encontradas) == 3 and flechas_str == defensa_correcta:
+                    # Calcular defensa correcta según números del bot
+                    defensa_correcta = ''.join([defensa_numero(n) for n in context.user_data.get('numeros_bot', '')])
+                
+                    if len(flechas) == 3 and flechas_str == defensa_correcta:
                         aciertos = context.user_data.get('golpeador_aciertos', 0) + 1
                         context.user_data['golpeador_aciertos'] = aciertos
                         await update.message.reply_text(
                             f"✅ *¡DEFENSA EXITOSA!*\n\n"
-                            f"El bot atacó con números: {numeros_correctos}\n"
+                            f"El bot atacó con: {context.user_data.get('numeros_bot')}\n"
                             f"Tu defensa: {flechas_str}\n\n"
                             f"📊 *Aciertos:* {aciertos} | *Fallos:* {context.user_data.get('golpeador_fallos', 0)}",
                             parse_mode="Markdown"
-                        )
+                    )
                     else:
                         fallos = context.user_data.get('golpeador_fallos', 0) + 1
                         context.user_data['golpeador_fallos'] = fallos
                         await update.message.reply_text(
                             f"❌ *¡DEFENSA FALLIDA!*\n\n"
-                            f"El bot atacó con: {numeros_correctos}\n"
+                            f"El bot atacó con: {context.user_data.get('numeros_bot')}\n"
                             f"Tu defensa: {flechas_str}\n"
                             f"Defensa correcta: {defensa_correcta}\n\n"
                             f"📊 *Aciertos:* {context.user_data.get('golpeador_aciertos', 0)} | *Fallos:* {fallos}",
                             parse_mode="Markdown"
                         )
                 else:
+                    fallos = context.user_data.get('golpeador_fallos', 0) + 1
+                    context.user_data['golpeador_fallos'] = fallos
                     await update.message.reply_text(
                         f"❌ *Formato de defensa incorrecto.*\n\n"
                         f"📝 *Formato correcto:*\n"
-                        f"`{emblema_usuario}🧹{defensa_correcta}🏏❌`",
+                        f"`{emblema_usuario}🧹⬅️⬆️➡️🏏❌`\n\n"
+                        f"📊 *Aciertos:* {context.user_data.get('golpeador_aciertos', 0)} | *Fallos:* {fallos}",
                         parse_mode="Markdown"
                     )
-                    return
             
-                context.user_data['golpeador_esperando_defensa'] = False
+                context.user_data['golpeador_esperando'] = False
                 await update.message.reply_text(
                     f"⚡ *¿Qué deseas hacer ahora?*\n"
                     f"Escribe *'atacar'* para golpear al bot.\n"
