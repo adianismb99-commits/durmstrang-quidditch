@@ -783,7 +783,7 @@ async def practicar_golpeador(update, context):
         parse_mode="Markdown"
     )
    
-   context.user_data['golpeador_esperando_listo'] = False
+    context.user_data['golpeador_esperando_listo'] = False
 
 async def practicar_buscador(update, context):
     query = update.callback_query
