@@ -86,6 +86,11 @@ def generar_secuencia():
     ])
     return palabras, flechas
 
+#======== GOLPE ALEATORIO =========
+def generar_golpe_aleatorio():
+    numeros = ''.join([str(random.randint(1, 9)) for _ in range(3)])
+    return numeros
+
 # ============= COMANDOS =============
 async def start(update, context):
     user_id = update.effective_user.id
@@ -734,8 +739,51 @@ async def practicar_guardian(update, context):
 async def practicar_golpeador(update, context):
     query = update.callback_query
     await query.answer()
+    
+    user_id = update.effective_user.id
+    
+    # Obtener datos del usuario
+    conn = sqlite3.connect('quidditch.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT casa, emblema FROM usuarios WHERE id_telegram = ?", (user_id,))
+    resultado = cursor.fetchone()
+    conn.close()
+    
+    casa_usuario = resultado[0] if resultado else "Galkin"
+    emblema_usuario = resultado[1] if resultado else "❤️"
+    
+    context.user_data['casa_usuario'] = casa_usuario
+    context.user_data['emblema_usuario'] = emblema_usuario
     context.user_data['practica_activa'] = 'golpeador'
-    await query.edit_message_text("🟢 *PRÁCTICA DE GOLPEADOR*\n\nEscribe 'salir' para terminar.", parse_mode="Markdown")
+    context.user_data['golpeador_aciertos'] = 0
+    context.user_data['golpeador_fallos'] = 0
+    context.user_data['golpeador_esperando_listo'] = True
+    context.user_data['golpeador_esperando_defensa'] = False
+    context.user_data['golpeador_modo'] = None  # 'atacar' o 'defender'
+    
+    keyboard = [[InlineKeyboardButton("❌ Salir de práctica", callback_data="salir_practica")]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(
+        "🟢 *PRÁCTICA DE GOLPEADOR* 🟢\n\n"
+        f"🏠 *Tu casa:* {emblema_usuario} ({casa_usuario})\n\n"
+        "📊 *TABLA DE NÚMEROS A FLECHAS:*\n"
+        "(2️⃣5️⃣1️⃣) → ⬅️\n(8️⃣9️⃣3️⃣) → ⬆️\n(7️⃣4️⃣6️⃣) → ➡️\n\n"
+        "⚔️ *PARA ATACAR:*\n"
+        f"`{emblema_usuario}🏏💥[3 números]@DurmstrangQuidditchBot`\n\n"
+        "🛡️ *PARA DEFENDER:*\n"
+        "Cuando el bot ataque, escribe:\n"
+        f"`{emblema_usuario}🧹[3 flechas]🏏❌`\n\n"
+        "💡 *Ejemplo de defensa:*\n"
+        f"`{emblema_usuario}🧹⬅️⬆️➡️🏏❌`\n\n"
+        "⚡ *Escribe 'atacar' para atacar al bot.*\n"
+        "⚡ *Escribe 'defender' para que el bot te ataque.*\n"
+        "⚡ *Escribe 'salir' para terminar.*",
+        reply_markup=reply_markup,
+        parse_mode="Markdown"
+    )
+   
+   context.user_data['golpeador_esperando_listo'] = False
 
 async def practicar_buscador(update, context):
     query = update.callback_query
