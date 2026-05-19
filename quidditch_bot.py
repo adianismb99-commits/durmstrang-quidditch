@@ -297,7 +297,7 @@ async def manejar_mensajes(update, context):
                 f"*Códigos Unicode de cada caracter:*\n"
                 f"`{[hex(ord(c)) for c in mensaje]}`\n\n"
                 f"*Lo que esperaba:*\n"
-                f"Defensa correcta: `{disparo.get('casa')}🧹{disparo.get('aro')}{defensa_correcta}`\n\n"
+                f"Defensa correcta: `{emblema_usuario}🧹{disparo.get('aro')}{defensa_correcta}`\n\n"
                 f"*Tu casa debería ser:* {emblema_usuario}\n"
                 f"*Aro del disparo:* {disparo.get('aro')}\n\n"
                 f"*Flechas correctas:* {defensa_correcta}\n\n"
