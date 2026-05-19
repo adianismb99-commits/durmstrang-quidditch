@@ -917,7 +917,6 @@ async def practicar_golpeador(update, context):
     
     user_id = update.effective_user.id
     
-    # Obtener datos del usuario
     conn = sqlite3.connect('quidditch.db')
     cursor = conn.cursor()
     cursor.execute("SELECT casa, emblema FROM usuarios WHERE id_telegram = ?", (user_id,))
@@ -932,9 +931,8 @@ async def practicar_golpeador(update, context):
     context.user_data['practica_activa'] = 'golpeador'
     context.user_data['golpeador_aciertos'] = 0
     context.user_data['golpeador_fallos'] = 0
-    context.user_data['golpeador_esperando_listo'] = True
-    context.user_data['golpeador_esperando_defensa'] = False
-    context.user_data['golpeador_modo'] = None  # 'atacar' o 'defender'
+    context.user_data['golpeador_modo'] = None
+    context.user_data['golpeador_esperando'] = False
     
     keyboard = [[InlineKeyboardButton("❌ Salir de práctica", callback_data="salir_practica")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -942,23 +940,20 @@ async def practicar_golpeador(update, context):
     await query.edit_message_text(
         "🟢 *PRÁCTICA DE GOLPEADOR* 🟢\n\n"
         f"🏠 *Tu casa:* {emblema_usuario} ({casa_usuario})\n\n"
-        "📊 *TABLA DE NÚMEROS A FLECHAS:*\n"
-        "(2️⃣5️⃣1️⃣) → ⬅️\n(8️⃣9️⃣3️⃣) → ⬆️\n(7️⃣4️⃣6️⃣) → ➡️\n\n"
+        "📊 *TABLA DE NÚMEROS A FLECHAS (para defender):*\n"
+        "1⬅️ 2⬅️ 3⬆️ 4➡️ 5⬅️ 6➡️ 7➡️ 8⬆️ 9⬆️\n\n"
         "⚔️ *PARA ATACAR:*\n"
-        f"`{emblema_usuario}🏏💥[3 números]@DurmstrangQuidditchBot`\n\n"
-        "🛡️ *PARA DEFENDER:*\n"
-        "Cuando el bot ataque, escribe:\n"
-        f"`{emblema_usuario}🧹[3 flechas]🏏❌`\n\n"
-        "💡 *Ejemplo de defensa:*\n"
-        f"`{emblema_usuario}🧹⬅️⬆️➡️🏏❌`\n\n"
-        "⚡ *Escribe 'atacar' para atacar al bot.*\n"
+        f"`{emblema_usuario}🏏💥[3 números]@DurmstrangQuidditchBot`\n"
+        "💡 *Ejemplo:* `❤️🏏💥123@DurmstrangQuidditchBot`\n\n"
+        "🛡️ *PARA DEFENDER (cuando el bot ataque):*\n"
+        f"`{emblema_usuario}🧹[3 flechas]🏏❌`\n"
+        "💡 *Ejemplo:* `❤️🧹⬅️⬆️➡️🏏❌`\n\n"
+        "⚡ *Escribe 'atacar' para golpear al bot.*\n"
         "⚡ *Escribe 'defender' para que el bot te ataque.*\n"
         "⚡ *Escribe 'salir' para terminar.*",
         reply_markup=reply_markup,
         parse_mode="Markdown"
     )
-   
-    context.user_data['golpeador_esperando_listo'] = False
 
 async def practicar_buscador(update, context):
     query = update.callback_query
