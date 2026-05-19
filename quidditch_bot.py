@@ -290,7 +290,7 @@ async def manejar_mensajes(update, context):
                 f"`{casa_usuario}🧹{disparo.get('aro')}{defensa_correcta}`",
                 parse_mode="Markdown"
                 )
-                return  # Salimos para no procesar más
+            return  # Salimos para no procesar más
             
             # ========== EXTRAER FLECHAS (MÚLTIPLES VARIANTES) ==========
             flechas_map = {
