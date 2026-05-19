@@ -247,7 +247,7 @@ async def manejar_mensajes(update, context):
                 f"¿Qué deseas hacer?\n"
                 f"/aprender - Ver reglas del juego\n"
                 f"/practicar- Entrenar otra posición\n"
-                f"/jugar - Iniciar una partida"
+                f"/jugar - Iniciar una partida",
                 parse_mode="Markdown"
             )
             return
