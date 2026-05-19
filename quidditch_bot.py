@@ -939,15 +939,15 @@ async def practicar_golpeador(update, context):
     
     await query.edit_message_text(
         "🟢 *PRÁCTICA DE GOLPEADOR* 🟢\n\n"
-        f"🏠 *Tu casa:* {emblema_usuario} ({casa_usuario})\n\n"
+        f"🏠 *Tu casa:* {emblema_usuario} {casa_usuario}\n\n"
         "📊 *TABLA DE NÚMEROS A FLECHAS (para defender):*\n"
-        "1⬅️ 2⬅️ 3⬆️ 4➡️ 5⬅️ 6➡️ 7➡️ 8⬆️ 9⬆️\n\n"
+        "(2️⃣5️⃣1️⃣) → ⬅️\n(8️⃣9️⃣3️⃣) → ⬆️\n(7️⃣4️⃣6️⃣) → ➡️\n\n"
         "⚔️ *PARA ATACAR:*\n"
-        f"`{emblema_usuario}🏏💥[3 números]@DurmstrangQuidditchBot`\n"
-        "💡 *Ejemplo:* `❤️🏏💥123@DurmstrangQuidditchBot`\n\n"
-        "🛡️ *PARA DEFENDER (cuando el bot ataque):*\n"
+        f"`{emblema_usuario}🏏💥[3 números]@Usuario`\n"
+        "💡 *Ejemplo:* `🤍🏏💥123@Usuario`\n\n"
+        "🛡️ *PARA DEFENDER:*\n"
         f"`{emblema_usuario}🧹[3 flechas]🏏❌`\n"
-        "💡 *Ejemplo:* `❤️🧹⬅️⬆️➡️🏏❌`\n\n"
+        "💡 *Ejemplo:* `🤍🧹⬅️⬆️➡️🏏❌`\n\n"
         "⚡ *Escribe 'atacar' para golpear al bot.*\n"
         "⚡ *Escribe 'defender' para que el bot te ataque.*\n"
         "⚡ *Escribe 'salir' para terminar.*",
