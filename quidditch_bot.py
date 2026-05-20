@@ -1403,6 +1403,17 @@ async def seleccionar_casa(update, context):
         parse_mode="Markdown"
     )
 
+async def jugar(update, context):
+    await update.message.reply_text(
+        "🏆 *MODO JUGAR* 🏆\n\n"
+        "Para iniciar una partida, el bot debe estar en un grupo.\n\n"
+        "Comandos disponibles:\n"
+        "/iniciar_partida - Comenzar una nueva partida\n"
+        "/unirse - Unirse a una partida existente\n\n"
+        "⚠️ Esta función estará disponible próximamente.",
+        parse_mode="Markdown"
+    )
+
 # ============= INICIAR EL BOT =============
 def main():
     iniciar_bd()
