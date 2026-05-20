@@ -521,7 +521,7 @@ async def manejar_mensajes(update, context):
         
             if modo == 'atacar':
                 # Verificar formato de ataque
-                if emblema_usuario in mensaje and '🏏💥' in mensaje and '@DurmstrangQuidditchBot' in mensaje:
+                if emblema_usuario in mensaje and '🏏💥' in mensaje and '@' in mensaje:
                     numeros = re.findall(r'[1-9]', mensaje)
                     if len(numeros) == 3:
                         # Ataque válido
@@ -571,7 +571,7 @@ async def manejar_mensajes(update, context):
                     # Calcular defensa correcta según números del bot
                     defensa_correcta = ''.join([defensa_numero(n) for n in context.user_data.get('numeros_bot', '')])
                 
-                    if len(flechas) == 3 and flechas_str == defensa_correcta:
+                    if len(flechas) == 6 and flechas_str == defensa_correcta:
                         aciertos = context.user_data.get('golpeador_aciertos', 0) + 1
                         context.user_data['golpeador_aciertos'] = aciertos
                         await update.message.reply_text(
