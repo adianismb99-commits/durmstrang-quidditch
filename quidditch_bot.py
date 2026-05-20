@@ -563,22 +563,39 @@ async def manejar_mensajes(update, context):
                 )
         
             elif modo == 'defender':
-                # ========== DIAGNÓSTICO EXHAUSTIVO ==========
+                                # ========== DIAGNÓSTICO EXHAUSTIVO ==========
                 numeros_bot = context.user_data.get('numeros_bot', '')
                 defensa_correcta = ''.join([defensa_numero(n) for n in numeros_bot])
                 
-                # Extraer flechas del mensaje
-                flechas_encontradas = re.findall(r'[⬆️⬇️➡️⬅️]', mensaje)
-                flechas_str = ''.join(flechas_encontradas)
-                
-                # Verificar componentes
+                # Verificar componentes básicos
                 tiene_emblema = emblema_usuario in mensaje
                 tiene_escoba = '🧹' in mensaje
                 tiene_marca_defensa = '🏏❌' in mensaje
                 
-                # Contar flechas (con y sin caracteres invisibles)
-                flechas_raw = [c for c in mensaje if c in ['⬆️', '⬇️', '➡️', '⬅️', '⬆', '⬇', '➡', '⬅', '↑', '↓', '→', '←']]
-                flechas_raw_str = ''.join(flechas_raw)
+                # Extracción SIN normalizar (para diagnóstico)
+                flechas_sin_normalizar = re.findall(r'[⬆️⬇️➡️⬅️]', mensaje)
+                flechas_sin_normalizar_str = ''.join(flechas_sin_normalizar)
+                
+                # ========== NORMALIZAR FLECHAS ==========
+                flechas_map = {
+                    '⬆️': '⬆️', '⬆': '⬆️', '↑': '⬆️',
+                    '⬇️': '⬇️', '⬇': '⬇️', '↓': '⬇️',
+                    '➡️': '➡️', '➡': '➡️', '→': '➡️',
+                    '⬅️': '⬅️', '⬅': '⬅️', '←': '⬅️'
+                }
+                flechas_normalizadas = []
+                for char in mensaje:
+                    normalizado = unicodedata.normalize('NFKC', char)
+                    if normalizado in flechas_map:
+                        flechas_normalizadas.append(flechas_map[normalizado])
+                    elif char in flechas_map:
+                        flechas_normalizadas.append(flechas_map[char])
+                flechas_normalizadas_str = ''.join(flechas_normalizadas)
+                flechas_count = len(flechas_normalizadas_str)
+                
+                # Comparación
+                flechas_correctas = (flechas_normalizadas_str == defensa_correcta)
+                longitud_correcta = (flechas_count == 3)
                 
                 # Diagnóstico detallado
                 diagnostico = (
@@ -590,21 +607,37 @@ async def manejar_mensajes(update, context):
                     f"• Marca defensa (🏏❌): {'✅ SÍ' if tiene_marca_defensa else '❌ NO'}\n\n"
                     f"🔢 *Números del bot:* {numeros_bot}\n"
                     f"🛡️ *Defensa correcta esperada:* `{defensa_correcta}`\n\n"
-                    f"🔬 *Flechas encontradas (crudas):* `{flechas_raw_str}`\n"
-                    f"*Longitud cruda:* {len(flechas_raw_str)}\n\n"
-                    f"🔬 *Flechas encontradas (filtradas):* `{flechas_str}`\n"
-                    f"*Longitud filtrada:* {len(flechas_str)}\n\n"
+                    f"🔬 *Flechas SIN normalizar:* `{flechas_sin_normalizar_str}`\n"
+                    f"*Cantidad sin normalizar:* {len(flechas_sin_normalizar_str)}\n\n"
+                    f"🔬 *Flechas NORMALIZADAS:* `{flechas_normalizadas_str}`\n"
+                    f"*Cantidad normalizada:* {flechas_count}\n\n"
                     f"*Comparación:*\n"
-                    f"• ¿Longitud correcta? (3): {'✅ SÍ' if len(flechas_encontradas) == 3 else f'❌ NO (tienes {len(flechas_encontradas)})'}\n"
-                    f"• ¿Flechas correctas?: {'✅ SÍ' if flechas_str == defensa_correcta else '❌ NO'}\n\n"
+                    f"• ¿Longitud correcta? (3): {'✅ SÍ' if longitud_correcta else f'❌ NO (tienes {flechas_count})'}\n"
+                    f"• ¿Flechas correctas?: {'✅ SÍ' if flechas_correctas else '❌ NO'}\n\n"
                     f"📝 *Para acertar, escribe exactamente:*\n"
                     f"`{emblema_usuario}🧹{defensa_correcta}🏏❌`"
                 )
                 
                 await update.message.reply_text(diagnostico, parse_mode="Markdown")
                 return  # Salimos para no procesar más
-                
-                # ========== FIN DEL DIAGNÓSTICO ==========                
+                 
+                # ========== NORMALIZAR FLECHAS ==========
+                flechas_map = {
+                    '⬆️': '⬆️', '⬆': '⬆️', '↑': '⬆️',
+                    '⬇️': '⬇️', '⬇': '⬇️', '↓': '⬇️',
+                    '➡️': '➡️', '➡': '➡️', '→': '➡️',
+                    '⬅️': '⬅️', '⬅': '⬅️', '←': '⬅️'
+                }
+                flechas_normalizadas = []
+                for char in mensaje:
+                    normalizado = unicodedata.normalize('NFKC', char)
+                    if normalizado in flechas_map:
+                        flechas_normalizadas.append(flechas_map[normalizado])
+                    elif char in flechas_map:
+                        flechas_normalizadas.append(flechas_map[char])
+                flechas_str = ''.join(flechas_normalizadas)
+                flechas_count = len(flechas_str)
+
                 # Verificar formato de defensa
                 if emblema_usuario in mensaje and '🧹' in mensaje and '🏏❌' in mensaje:
                     flechas = re.findall(r'[⬆️➡️⬅️]', mensaje)
@@ -613,7 +646,7 @@ async def manejar_mensajes(update, context):
                     # Calcular defensa correcta según números del bot
                     defensa_correcta = ''.join([defensa_numero(n) for n in context.user_data.get('numeros_bot', '')])
                 
-                    if len(flechas) == 6 and flechas_str == defensa_correcta:
+                    if len(flechas) == 3 and flechas_str == defensa_correcta:
                         aciertos = context.user_data.get('golpeador_aciertos', 0) + 1
                         context.user_data['golpeador_aciertos'] = aciertos
                         await update.message.reply_text(
