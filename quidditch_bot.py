@@ -459,8 +459,6 @@ async def manejar_mensajes(update, context):
                 )
             return
 
-#===========]]\$}=¢}`§=¥°=¥[¢\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
     elif practica == 'golpeador':
         mensaje = update.message.text
         emblema_usuario = context.user_data.get('emblema_usuario', '❤️')
@@ -564,62 +562,62 @@ async def manejar_mensajes(update, context):
         
             elif modo == 'defender':
                                 # ========== DIAGNÓSTICO EXHAUSTIVO ==========
-                numeros_bot = context.user_data.get('numeros_bot', '')
-                defensa_correcta = ''.join([defensa_numero(n) for n in numeros_bot])
+                #numeros_bot = context.user_data.get('numeros_bot', '')
+                #defensa_correcta = ''.join([defensa_numero(n) for n in numeros_bot])
                 
                 # Verificar componentes básicos
-                tiene_emblema = emblema_usuario in mensaje
-                tiene_escoba = '🧹' in mensaje
-                tiene_marca_defensa = '🏏❌' in mensaje
+                #tiene_emblema = emblema_usuario in mensaje
+                #tiene_escoba = '🧹' in mensaje
+                #tiene_marca_defensa = '🏏❌' in mensaje
                 
                 # Extracción SIN normalizar (para diagnóstico)
-                flechas_sin_normalizar = re.findall(r'[⬆️⬇️➡️⬅️]', mensaje)
-                flechas_sin_normalizar_str = ''.join(flechas_sin_normalizar)
+                #flechas_sin_normalizar = re.findall(r'[⬆️⬇️➡️⬅️]', mensaje)
+                #flechas_sin_normalizar_str = ''.join(flechas_sin_normalizar)
                 
                 # ========== NORMALIZAR FLECHAS ==========
-                flechas_map = {
-                    '⬆️': '⬆️', '⬆': '⬆️', '↑': '⬆️',
-                    '⬇️': '⬇️', '⬇': '⬇️', '↓': '⬇️',
-                    '➡️': '➡️', '➡': '➡️', '→': '➡️',
-                    '⬅️': '⬅️', '⬅': '⬅️', '←': '⬅️'
-                }
-                flechas_normalizadas = []
-                for char in mensaje:
-                    normalizado = unicodedata.normalize('NFKC', char)
-                    if normalizado in flechas_map:
-                        flechas_normalizadas.append(flechas_map[normalizado])
-                    elif char in flechas_map:
-                        flechas_normalizadas.append(flechas_map[char])
-                flechas_normalizadas_str = ''.join(flechas_normalizadas)
-                flechas_count = len(flechas_normalizadas_str)
+                #flechas_map = {
+                #    '⬆️': '⬆️', '⬆': '⬆️', '↑': '⬆️',
+                #    '⬇️': '⬇️', '⬇': '⬇️', '↓': '⬇️',
+                #    '➡️': '➡️', '➡': '➡️', '→': '➡️',
+                #    '⬅️': '⬅️', '⬅': '⬅️', '←': '⬅️'
+                #}
+                #flechas_normalizadas = []
+                #for char in mensaje:
+                #    normalizado = unicodedata.normalize('NFKC', char)
+                #    if normalizado in flechas_map:
+                #        flechas_normalizadas.append(flechas_map[normalizado])
+                #    elif char in flechas_map:
+                #        flechas_normalizadas.append(flechas_map[char])
+                #flechas_normalizadas_str = ''.join(flechas_normalizadas)
+                #flechas_count = len(flechas_normalizadas_str)
                 
-                # Comparación
-                flechas_correctas = (flechas_normalizadas_str == defensa_correcta)
-                longitud_correcta = (flechas_count == 3)
+                ## Comparación
+                #flechas_correctas = (flechas_normalizadas_str == defensa_correcta)
+                #longitud_correcta = (flechas_count == 3)
                 
                 # Diagnóstico detallado
-                diagnostico = (
-                    f"🔍 *DIAGNÓSTICO GOLPEADOR - DEFENSA* 🔍\n\n"
-                    f"📨 *Mensaje recibido:*\n`{mensaje}`\n\n"
-                    f"📊 *Validación de componentes:*\n"
-                    f"• Emblema correcto ({emblema_usuario}): {'✅ SÍ' if tiene_emblema else '❌ NO'}\n"
-                    f"• Escoba (🧹): {'✅ SÍ' if tiene_escoba else '❌ NO'}\n"
-                    f"• Marca defensa (🏏❌): {'✅ SÍ' if tiene_marca_defensa else '❌ NO'}\n\n"
-                    f"🔢 *Números del bot:* {numeros_bot}\n"
-                    f"🛡️ *Defensa correcta esperada:* `{defensa_correcta}`\n\n"
-                    f"🔬 *Flechas SIN normalizar:* `{flechas_sin_normalizar_str}`\n"
-                    f"*Cantidad sin normalizar:* {len(flechas_sin_normalizar_str)}\n\n"
-                    f"🔬 *Flechas NORMALIZADAS:* `{flechas_normalizadas_str}`\n"
-                    f"*Cantidad normalizada:* {flechas_count}\n\n"
-                    f"*Comparación:*\n"
-                    f"• ¿Longitud correcta? (3): {'✅ SÍ' if longitud_correcta else f'❌ NO (tienes {flechas_count})'}\n"
-                    f"• ¿Flechas correctas?: {'✅ SÍ' if flechas_correctas else '❌ NO'}\n\n"
-                    f"📝 *Para acertar, escribe exactamente:*\n"
-                    f"`{emblema_usuario}🧹{defensa_correcta}🏏❌`"
-                )
+                #diagnostico = (
+                #    f"🔍 *DIAGNÓSTICO GOLPEADOR - DEFENSA* 🔍\n\n"
+                #    f"📨 *Mensaje recibido:*\n`{mensaje}`\n\n"
+                #    f"📊 *Validación de componentes:*\n"
+                #    f"• Emblema correcto ({emblema_usuario}): {'✅ SÍ' if tiene_emblema else '❌ NO'}\n"
+                #    f"• Escoba (🧹): {'✅ SÍ' if tiene_escoba else '❌ NO'}\n"
+                #    f"• Marca defensa (🏏❌): {'✅ SÍ' if tiene_marca_defensa else '❌ NO'}\n\n"
+                #    f"🔢 *Números del bot:* {numeros_bot}\n"
+                #    f"🛡️ *Defensa correcta esperada:* `{defensa_correcta}`\n\n"
+                #    f"🔬 *Flechas SIN normalizar:* `{flechas_sin_normalizar_str}`\n"
+                #    f"*Cantidad sin normalizar:* {len(flechas_sin_normalizar_str)}\n\n"
+                #    f"🔬 *Flechas NORMALIZADAS:* `{flechas_normalizadas_str}`\n"
+                #    f"*Cantidad normalizada:* {flechas_count}\n\n"
+                #    f"*Comparación:*\n"
+                #    f"• ¿Longitud correcta? (3): {'✅ SÍ' if longitud_correcta else f'❌ NO (tienes {flechas_count})'}\n"
+                #    f"• ¿Flechas correctas?: {'✅ SÍ' if flechas_correctas else '❌ NO'}\n\n"
+                #    f"📝 *Para acertar, escribe exactamente:*\n"
+                #    f"`{emblema_usuario}🧹{defensa_correcta}🏏❌`"
+                #)
                 
-                await update.message.reply_text(diagnostico, parse_mode="Markdown")
-               # return  # Salimos para no procesar más
+                #await update.message.reply_text(diagnostico, parse_mode="Markdown")
+                #return  # Salimos para no procesar más
                  
                 numeros_bot = context.user_data.get('numeros_bot', '')
                 defensa_correcta = ''.join([defensa_numero(n) for n in numeros_bot])
@@ -692,6 +690,156 @@ async def manejar_mensajes(update, context):
                 f"Escribe *'salir'* para terminar.",
                 parse_mode="Markdown"
             )
+
+    elif practica == 'buscador':
+        mensaje = update.message.text
+        emblema_usuario = context.user_data.get('emblema_usuario', '❤️')
+        
+        if mensaje.lower() == 'salir':
+            aciertos = context.user_data.get('buscador_aciertos', 0)
+            fallos = context.user_data.get('buscador_fallos', 0)
+            context.user_data['practica_activa'] = None
+            await update.message.reply_text(
+                f"✅ *Práctica de Buscador finalizada.*\n\n"
+                f"📊 *Estadísticas:*\n"
+                f"• Snitches capturadas: {aciertos}\n"
+                f"• Snitches perdidas: {fallos}\n\n"
+                f"¿Qué deseas hacer?\n"
+                f"/aprender - Ver reglas del juego\n"
+                f"/practicar - Entrenar otra posición\n"
+                f"/jugar - Iniciar una partida",
+                parse_mode="Markdown"
+            )
+            return
+        
+        # Iniciar práctica
+        if mensaje.lower() == 'empezar':
+            snitches_restantes = context.user_data.get('buscador_snitches_restantes', 3)
+            if snitches_restantes <= 0:
+                await update.message.reply_text(
+                    f"🎉 *¡PRÁCTICA COMPLETADA!* 🎉\n\n"
+                    f"Capturaste {context.user_data.get('buscador_aciertos', 0)} de 3 snitches.\n\n"
+                    f"Usa /practicar para volver a entrenar.",
+                    parse_mode="Markdown"
+                )
+                context.user_data['practica_activa'] = None
+                return
+            
+            # Generar secuencia
+            palabras, flechas = generar_secuencia()
+            context.user_data['secuencia_actual'] = flechas
+            context.user_data['buscador_esperando_respuesta'] = True
+            
+            direcciones_str = '/'.join(palabras)
+            
+            await update.message.reply_text(
+                f"✨ *¡SNITCH DETECTADA!* ✨\n\n"
+                f"🔅 *Secuencia de la snitch:*\n"
+                f"`{direcciones_str}`\n\n"
+                f"📝 *Responde con el formato:*\n"
+                f"`{emblema_usuario}🧹🖐🏻🔅✊🏻{flechas}`\n\n"
+                f"⚡ *¡Responde rápido!*",
+                parse_mode="Markdown"
+            )
+            return
+        
+        # Procesar respuesta
+        if context.user_data.get('buscador_esperando_respuesta'):
+            secuencia_correcta = context.user_data.get('secuencia_actual', '')
+            
+            # Verificar formato básico
+            if emblema_usuario in mensaje and '🧹' in mensaje and '🖐🏻' in mensaje and '🔅✊🏻' in mensaje:
+                # Extraer flechas del mensaje
+                flechas_map = {
+                    '⬆️': '⬆️', '⬆': '⬆️', '↑': '⬆️',
+                    '⬇️': '⬇️', '⬇': '⬇️', '↓': '⬇️',
+                    '➡️': '➡️', '➡': '➡️', '→': '➡️',
+                    '⬅️': '⬅️', '⬅': '⬅️', '←': '⬅️'
+                }
+                flechas_encontradas = []
+                for char in mensaje:
+                    normalizado = unicodedata.normalize('NFKC', char)
+                    if normalizado in flechas_map:
+                        flechas_encontradas.append(flechas_map[normalizado])
+                    elif char in flechas_map:
+                        flechas_encontradas.append(flechas_map[char])
+                flechas_str = ''.join(flechas_encontradas)
+                
+                if flechas_str == secuencia_correcta:
+                    # Captura exitosa
+                    aciertos = context.user_data.get('buscador_aciertos', 0) + 1
+                    restantes = context.user_data.get('buscador_snitches_restantes', 3) - 1
+                    context.user_data['buscador_aciertos'] = aciertos
+                    context.user_data['buscador_snitches_restantes'] = restantes
+                    context.user_data['buscador_esperando_respuesta'] = False
+                    
+                    if restantes > 0:
+                        await update.message.reply_text(
+                            f"🎉 *¡SNITCH CAPTURADA!* 🎉\n\n"
+                            f"✅ Secuencia correcta: {secuencia_correcta}\n"
+                            f"✨ *Snitches restantes:* {restantes}/3\n\n"
+                            f"⚡ *Escribe 'empezar' para la siguiente snitch.*",
+                            parse_mode="Markdown"
+                        )
+                    else:
+                        await update.message.reply_text(
+                            f"🏆 *¡PRÁCTICA COMPLETADA!* 🏆\n\n"
+                            f"✅ Capturaste las 3 snitches.\n"
+                            f"📊 *Total de capturas:* {aciertos}/3\n\n"
+                            f"🎉 ¡Excelente trabajo, buscador!\n\n"
+                            f"Usa /practicar para volver a entrenar.",
+                            parse_mode="Markdown"
+                        )
+                        context.user_data['practica_activa'] = None
+                else:
+                    # Captura fallida
+                    fallos = context.user_data.get('buscador_fallos', 0) + 1
+                    restantes = context.user_data.get('buscador_snitches_restantes', 3) - 1
+                    context.user_data['buscador_fallos'] = fallos
+                    context.user_data['buscador_snitches_restantes'] = restantes
+                    context.user_data['buscador_esperando_respuesta'] = False
+                    
+                    if restantes > 0:
+                        await update.message.reply_text(
+                            f"❌ *¡SNITCH PERDIDA!* ❌\n\n"
+                            f"Tu respuesta: {flechas_str}\n"
+                            f"Secuencia correcta: {secuencia_correcta}\n"
+                            f"✨ *Snitches restantes:* {restantes}/3\n\n"
+                            f"⚡ *Escribe 'empezar' para la siguiente snitch.*",
+                            parse_mode="Markdown"
+                        )
+                    else:
+                        await update.message.reply_text(
+                            f"💀 *PRÁCTICA TERMINADA* 💀\n\n"
+                            f"No lograste capturar las 3 snitches.\n"
+                            f"📊 *Snitches capturadas:* {context.user_data.get('buscador_aciertos', 0)}/3\n\n"
+                            f"Usa /practicar para volver a intentarlo.",
+                            parse_mode="Markdown"
+                        )
+                        context.user_data['practica_activa'] = None
+            else:
+                await update.message.reply_text(
+                    f"❌ *Formato incorrecto.*\n\n"
+                    f"📝 *Formato correcto:*\n"
+                    f"`{emblema_usuario}🧹🖐🏻⬆️⬇️➡️⬅️🔅✊🏻`\n\n"
+                    f"*Consejos:*\n"
+                    f"• Usa tu emblema {emblema_usuario}\n"
+                    f"• Incluye: 🧹 (escoba)\n"
+                    f"• Incluye: 🖐🏻 (mano)\n"
+                    f"• Incluye: 🔅✊🏻 (símbolo de buscador)\n"
+                    f"• Termina con la secuencia de flechas\n\n"
+                    f"Intenta de nuevo con la misma snitch:",
+                    parse_mode="Markdown"
+                )
+            return
+        
+        # Si no está en estado activo
+        await update.message.reply_text(
+            f"🟣 *Práctica de Buscador*\n\n"
+            f"Escribe *'empezar'* para comenzar.\n"
+            f"Escribe *'salir'* para terminar.",
+            parse_mode="Markdown"
+        )            
     
     elif context.user_data.get('esperando_casa'):
         casa = update.message.text
@@ -1017,8 +1165,49 @@ async def practicar_golpeador(update, context):
 async def practicar_buscador(update, context):
     query = update.callback_query
     await query.answer()
+    
+    user_id = update.effective_user.id
+    
+    # Obtener datos del usuario
+    conn = sqlite3.connect('quidditch.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT casa, emblema FROM usuarios WHERE id_telegram = ?", (user_id,))
+    resultado = cursor.fetchone()
+    conn.close()
+    
+    casa_usuario = resultado[0] if resultado else "Galkin"
+    emblema_usuario = resultado[1] if resultado else "❤️"
+    
+    context.user_data['casa_usuario'] = casa_usuario
+    context.user_data['emblema_usuario'] = emblema_usuario
     context.user_data['practica_activa'] = 'buscador'
-    await query.edit_message_text("🟣 *PRÁCTICA DE BUSCADOR*\n\nEscribe 'salir' para terminar.", parse_mode="Markdown")
+    context.user_data['buscador_aciertos'] = 0
+    context.user_data['buscador_fallos'] = 0
+    context.user_data['buscador_snitches_restantes'] = 3
+    context.user_data['buscador_esperando_respuesta'] = False
+    
+    keyboard = [[InlineKeyboardButton("❌ Salir de práctica", callback_data="salir_practica")]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(
+        "🟣 *PRÁCTICA DE BUSCADOR* 🟣\n\n"
+        f"🏠 *Tu casa:* {emblema_usuario} {casa_usuario}\n\n"
+        "📌 *OBJETIVO:* Captura las 3 snitches.\n\n"
+        "✨ *MECÁNICA:*\n"
+        "• El bot mostrará una combinación de *PALABRAS*:\n"
+        "  `ARRIBA`, `ABAJO`, `DERECHA`, `IZQUIERDA`\n\n"
+        "• Debes responder con *FLECHAS*:\n"
+        "  `⬆️` (ARRIBA) | `⬇️` (ABAJO) | `➡️` (DERECHA) | `⬅️` (IZQUIERDA)\n\n"
+        "📝 *Formato de respuesta:*\n"
+        f"`{emblema_usuario}🧹🖐🏻[secuencia de flechas]🔅✊🏻`\n\n"
+        "💡 *Ejemplo:*\n"
+        "Si el bot muestra: `ARRIBA/ABAJO/IZQUIERDA/DERECHA`\n"
+        f"Tu respuesta: `{emblema_usuario}🧹🖐🏻🔅✊🏻⬆️⬇️⬅️➡️`\n\n"
+        "⚡ *Escribe 'empezar' para comenzar.*\n"
+        "⚡ *Escribe 'salir' para terminar.*",
+        reply_markup=reply_markup,
+        parse_mode="Markdown"
+    )
 
 async def salir_practica(update, context):
     query = update.callback_query
