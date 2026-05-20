@@ -1464,6 +1464,43 @@ async def jugar(update, context):
         parse_mode="Markdown"
     )
 
+async def modificar_cuenta(update, context):
+    user_id = update.effective_user.id
+    
+    conn = sqlite3.connect('quidditch.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT casa, emblema FROM usuarios WHERE id_telegram = ?", (user_id,))
+    resultado = cursor.fetchone()
+    conn.close()
+    
+    if resultado is None:
+        await update.message.reply_text(
+            "❌ No tienes una cuenta activa.\n"
+            "Usa /crear_cuenta para registrarte.",
+            parse_mode="Markdown"
+        )
+        return
+    
+    casa_actual = resultado[0]
+    emblema_actual = resultado[1]
+    
+    keyboard = [
+        [InlineKeyboardButton("❤️ Cambiar a Galkin", callback_data="cambiar_casa_Galkin")],
+        [InlineKeyboardButton("💜 Cambiar a Darfor", callback_data="cambiar_casa_Darfor")],
+        [InlineKeyboardButton("💚 Cambiar a Olsson", callback_data="cambiar_casa_Olsson")],
+        [InlineKeyboardButton("❌ Cancelar", callback_data="cancelar_cambio")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await update.message.reply_text(
+        f"🔧 *Modificar cuenta*\n\n"
+        f"Casa actual: {emblema_actual} {casa_actual}\n\n"
+        f"¿A qué casa quieres cambiarte?\n\n"
+        f"*Nota:* Al cambiar de casa, tus estadísticas se mantienen.",
+        reply_markup=reply_markup,
+        parse_mode="Markdown"
+    )
+
 # ============= INICIAR EL BOT =============
 def main():
     iniciar_bd()
@@ -1475,6 +1512,7 @@ def main():
     app.add_handler(CommandHandler("aprender", aprender))
     app.add_handler(CommandHandler("practicar", practicar))
     app.add_handler(CommandHandler("jugar", jugar))
+    app.add_handler(CommandHandler("modificar_cuenta", modificar_cuenta))
     
     app.add_handler(CallbackQueryHandler(practicar_cazador, pattern="prac_cazador"))
     app.add_handler(CallbackQueryHandler(practicar_guardian, pattern="prac_guardian"))
