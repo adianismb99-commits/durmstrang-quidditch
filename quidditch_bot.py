@@ -144,6 +144,25 @@ async def start(update, context):
         )
 
 async def crear_cuenta(update, context):
+    user_id = update.effective_user.id
+    
+    conn = sqlite3.connect('quidditch.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM usuarios WHERE id_telegram = ?", (user_id,))
+    usuario = cursor.fetchone()
+    conn.close()
+    
+    if usuario is not None:
+        await update.message.reply_text(
+            f"⚠️ *Ya tienes una cuenta activa!*\n\n"
+            f"Nombre: {usuario[1]}\n"
+            f"Casa: {usuario[2]}\n"
+            f"Cargo: {usuario[3]}\n\n"
+            "Usa /start para ver el menú principal.",
+            parse_mode="Markdown"
+        )
+        return
+    
     await update.message.reply_text(
         "Vamos a crear tu cuenta.\n\n"
         "Primero, elige tu casa:\n"
@@ -1256,6 +1275,37 @@ async def boton_crear_cuenta(update, context):
     query = update.callback_query
     await query.answer()
     
+    user_id = update.effective_user.id
+    
+    # Verificar si el usuario ya tiene cuenta
+    conn = sqlite3.connect('quidditch.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM usuarios WHERE id_telegram = ?", (user_id,))
+    usuario = cursor.fetchone()
+    conn.close()
+    
+    if usuario is not None:
+        # Usuario ya existe
+        keyboard = [
+            [InlineKeyboardButton("🏋️ Practicar", callback_data="ir_a_practicar")],
+            [InlineKeyboardButton("📚 Aprender", callback_data="ir_a_aprender")],
+            [InlineKeyboardButton("🏆 Jugar", callback_data="ir_a_jugar")],
+            [InlineKeyboardButton("🔧 Modificar cuenta", callback_data="modificar_cuenta")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(
+            f"⚠️ *Ya tienes una cuenta activa!*\n\n"
+            f"Nombre: {usuario[1]}\n"
+            f"Casa: {usuario[2]}\n"
+            f"Cargo: {usuario[3]}\n\n"
+            "¿Qué deseas hacer?",
+            reply_markup=reply_markup,
+            parse_mode="Markdown"
+        )
+        return
+    
+    # Usuario nuevo: mostrar selección de casa
     keyboard = [
         [InlineKeyboardButton("❤️ Galkin", callback_data="casa_Galkin")],
         [InlineKeyboardButton("💜 Darfor", callback_data="casa_Darfor")],
