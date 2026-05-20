@@ -737,7 +737,7 @@ async def manejar_mensajes(update, context):
                 f"🔅 *Secuencia de la snitch:*\n"
                 f"`{direcciones_str}`\n\n"
                 f"📝 *Responde con el formato:*\n"
-                f"`{emblema_usuario}🧹🖐🏻🔅✊🏻{flechas}`\n\n"
+                f"`{emblema_usuario}🧹🖐🏻⬅️⬇️⬆️➡️🔅✊🏻`\n\n"
                 f"⚡ *¡Responde rápido!*",
                 parse_mode="Markdown"
             )
@@ -826,8 +826,8 @@ async def manejar_mensajes(update, context):
                     f"• Usa tu emblema {emblema_usuario}\n"
                     f"• Incluye: 🧹 (escoba)\n"
                     f"• Incluye: 🖐🏻 (mano)\n"
-                    f"• Incluye: 🔅✊🏻 (símbolo de buscador)\n"
-                    f"• Termina con la secuencia de flechas\n\n"
+                    f"• Secuencia de flechas\n"
+                    f"• Termina con: 🔅✊🏻 (snitch capturada)\n\n"
                     f"Intenta de nuevo con la misma snitch:",
                     parse_mode="Markdown"
                 )
