@@ -563,6 +563,48 @@ async def manejar_mensajes(update, context):
                 )
         
             elif modo == 'defender':
+                # ========== DIAGNÓSTICO EXHAUSTIVO ==========
+                numeros_bot = context.user_data.get('numeros_bot', '')
+                defensa_correcta = ''.join([defensa_numero(n) for n in numeros_bot])
+                
+                # Extraer flechas del mensaje
+                flechas_encontradas = re.findall(r'[⬆️⬇️➡️⬅️]', mensaje)
+                flechas_str = ''.join(flechas_encontradas)
+                
+                # Verificar componentes
+                tiene_emblema = emblema_usuario in mensaje
+                tiene_escoba = '🧹' in mensaje
+                tiene_marca_defensa = '🏏❌' in mensaje
+                
+                # Contar flechas (con y sin caracteres invisibles)
+                flechas_raw = [c for c in mensaje if c in ['⬆️', '⬇️', '➡️', '⬅️', '⬆', '⬇', '➡', '⬅', '↑', '↓', '→', '←']]
+                flechas_raw_str = ''.join(flechas_raw)
+                
+                # Diagnóstico detallado
+                diagnostico = (
+                    f"🔍 *DIAGNÓSTICO GOLPEADOR - DEFENSA* 🔍\n\n"
+                    f"📨 *Mensaje recibido:*\n`{mensaje}`\n\n"
+                    f"📊 *Validación de componentes:*\n"
+                    f"• Emblema correcto ({emblema_usuario}): {'✅ SÍ' if tiene_emblema else '❌ NO'}\n"
+                    f"• Escoba (🧹): {'✅ SÍ' if tiene_escoba else '❌ NO'}\n"
+                    f"• Marca defensa (🏏❌): {'✅ SÍ' if tiene_marca_defensa else '❌ NO'}\n\n"
+                    f"🔢 *Números del bot:* {numeros_bot}\n"
+                    f"🛡️ *Defensa correcta esperada:* `{defensa_correcta}`\n\n"
+                    f"🔬 *Flechas encontradas (crudas):* `{flechas_raw_str}`\n"
+                    f"*Longitud cruda:* {len(flechas_raw_str)}\n\n"
+                    f"🔬 *Flechas encontradas (filtradas):* `{flechas_str}`\n"
+                    f"*Longitud filtrada:* {len(flechas_str)}\n\n"
+                    f"*Comparación:*\n"
+                    f"• ¿Longitud correcta? (3): {'✅ SÍ' if len(flechas_encontradas) == 3 else f'❌ NO (tienes {len(flechas_encontradas)})'}\n"
+                    f"• ¿Flechas correctas?: {'✅ SÍ' if flechas_str == defensa_correcta else '❌ NO'}\n\n"
+                    f"📝 *Para acertar, escribe exactamente:*\n"
+                    f"`{emblema_usuario}🧹{defensa_correcta}🏏❌`"
+                )
+                
+                await update.message.reply_text(diagnostico, parse_mode="Markdown")
+                return  # Salimos para no procesar más
+                
+                # ========== FIN DEL DIAGNÓSTICO ==========                
                 # Verificar formato de defensa
                 if emblema_usuario in mensaje and '🧹' in mensaje and '🏏❌' in mensaje:
                     flechas = re.findall(r'[⬆️➡️⬅️]', mensaje)
