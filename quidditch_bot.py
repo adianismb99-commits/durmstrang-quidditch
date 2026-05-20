@@ -790,7 +790,9 @@ async def manejar_mensajes(update, context):
             secuencia_correcta = context.user_data.get('secuencia_actual', '')
             
             # Verificar formato básico
-            if emblema_usuario in mensaje and '🧹' in mensaje and '🖐🏻' in mensaje and '🔅✊🏻' in mensaje:
+            mano_abierta = any(mano in mensaje for mano in ['🖐🏻', '🖐🏼', '🖐🏽', '🖐🏾', '🖐🏿'])
+            mano_cerrada =  any(mano in mensaje for mano in ['✊🏻', '✊🏼', '✊🏽', '✊🏾', '✊🏿'])
+            if emblema_usuario in mensaje and '🧹' in mensaje and mano_abierta and '🔅' in mensaje and mano_cerrada:
                 # Extraer flechas del mensaje
                 flechas_map = {
                     '⬆️': '⬆️', '⬆': '⬆️', '↑': '⬆️',
