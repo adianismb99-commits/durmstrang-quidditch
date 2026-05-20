@@ -110,11 +110,17 @@ async def start(update, context):
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     if usuario is None:
-        # Usuario nuevo: mostrar botones de registro
+        # Usuario nuevo: mostrar botones de selección de casa
+        keyboard = [
+            [InlineKeyboardButton("❤️ Galkin", callback_data="casa_Galkin")],
+            [InlineKeyboardButton("💜 Darfor", callback_data="casa_Darfor")],
+            [InlineKeyboardButton("💚 Olsson", callback_data="casa_Olsson")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
         await update.message.reply_text(
             f"✨ ¡Bienvenido {nombre} al Durmstrang's Quidditch! ✨\n\n"
-            "Para comenzar, necesitas crear una cuenta.\n\n"
-            "Usa los botones de abajo para navegar:",
+            "Para comenzar, elige tu casa tocando un botón:",
             reply_markup=reply_markup,
             parse_mode="Markdown"
         )
@@ -1232,17 +1238,37 @@ async def salir_practica(update, context):
     context.user_data['practica_activa'] = None
     await query.edit_message_text("✅ Has salido del modo práctica.")
 
-async def jugar(update, context):
-    await update.message.reply_text("🏆 *MODO JUGAR*\n\nPróximamente.", parse_mode="Markdown")
+async def ir_a_jugar(update, context):
+    query = update.callback_query
+    await query.answer()
+    
+    await query.edit_message_text(
+        "🏆 *MODO JUGAR* 🏆\n\n"
+        "Para iniciar una partida, el bot debe estar en un grupo.\n\n"
+        "Comandos disponibles:\n"
+        "/iniciar_partida - Comenzar una nueva partida\n"
+        "/unirse - Unirse a una partida existente\n\n"
+        "⚠️ Esta función estará disponible próximamente.",
+        parse_mode="Markdown"
+    )
 
 async def boton_crear_cuenta(update, context):
     query = update.callback_query
     await query.answer()
     
-    # Redirigir a la creación de cuenta
-    await crear_cuenta(update, context)
-    # Eliminar el mensaje del botón para no acumular
-    await query.edit_message_reply_markup(reply_markup=None)
+    keyboard = [
+        [InlineKeyboardButton("❤️ Galkin", callback_data="casa_Galkin")],
+        [InlineKeyboardButton("💜 Darfor", callback_data="casa_Darfor")],
+        [InlineKeyboardButton("💚 Olsson", callback_data="casa_Olsson")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(
+        "Vamos a crear tu cuenta.\n\n"
+        "Elige tu casa tocando un botón:",
+        reply_markup=reply_markup,
+        parse_mode="Markdown"
+    )
 
 async def boton_modificar_cuenta(update, context):
     query = update.callback_query
@@ -1322,7 +1348,60 @@ async def cancelar_cambio(update, context):
 async def ir_a_aprender(update, context):
     query = update.callback_query
     await query.answer()
-    await aprender(update, context)
+    
+    # Llamar directamente a la función aprender
+    keyboard = [
+        [InlineKeyboardButton("🟣 Buscador", callback_data="aprender_buscador"), InlineKeyboardButton("🔴 Cazador", callback_data="aprender_cazador")],
+        [InlineKeyboardButton("🟡 Guardián", callback_data="aprender_guardian"), InlineKeyboardButton("🟢 Golpeador", callback_data="aprender_golpeador")],
+        [InlineKeyboardButton("📜 Reglas generales", callback_data="aprender_general")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_text(
+        "📚 *CENTRO DE APRENDIZAJE*\n\nElige una opción:",
+        reply_markup=reply_markup,
+        parse_mode="Markdown"
+    )
+
+async def seleccionar_casa(update, context):
+    query = update.callback_query
+    await query.answer()
+    
+    user_id = update.effective_user.id
+    nombre = update.effective_user.first_name
+    
+    # Obtener la casa seleccionada
+    casa = query.data.replace("casa_", "")  # Galkin, Darfor, Olsson
+    
+    # Convertir nombre de casa a emoji
+    emblema_usuario = "❤️" if casa == "Galkin" else "💜" if casa == "Darfor" else "💚"
+    
+    # Guardar en la base de datos
+    conn = sqlite3.connect('quidditch.db')
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO usuarios (id_telegram, nombre, casa, emblema, cargo, puntos_totales, fecha_registro) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (user_id, nombre, casa, emblema_usuario, "Estudiante", 0, datetime.now())
+    )
+    conn.commit()
+    conn.close()
+    
+    # Mostrar mensaje de éxito con botones
+    keyboard = [
+        [InlineKeyboardButton("🏋️ Practicar", callback_data="ir_a_practicar")],
+        [InlineKeyboardButton("📚 Aprender", callback_data="ir_a_aprender")],
+        [InlineKeyboardButton("🏆 Jugar", callback_data="ir_a_jugar")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(
+        f"✅ *¡Cuenta creada!*\n\n"
+        f"Nombre: {nombre}\n"
+        f"Casa: {emblema_usuario} {casa}\n"
+        f"Cargo: Estudiante\n\n"
+        "¿Qué deseas hacer?",
+        reply_markup=reply_markup,
+        parse_mode="Markdown"
+    )
 
 # ============= INICIAR EL BOT =============
 def main():
@@ -1350,7 +1429,8 @@ def main():
     app.add_handler(CallbackQueryHandler(cancelar_cambio, pattern="cancelar_cambio"))
     app.add_handler(CallbackQueryHandler(ir_a_aprender, pattern="ir_a_aprender"))
     app.add_handler(CallbackQueryHandler(ir_a_practicar, pattern="ir_a_practicar"))
-    app.add_handler(CallbackQueryHandler(jugar, pattern="ir_a_jugar"))
+    app.add_handler(CallbackQueryHandler(ir_a_jugar, pattern="ir_a_jugar"))
+    app.add_handler(CallbackQueryHandler(seleccionar_casa, pattern="casa_"))
 
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, manejar_mensajes))
     
