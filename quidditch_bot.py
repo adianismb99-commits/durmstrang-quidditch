@@ -101,23 +101,40 @@ async def start(update, context):
     cursor.execute("SELECT * FROM usuarios WHERE id_telegram = ?", (user_id,))
     usuario = cursor.fetchone()
     conn.close()
+
+    # Botones de acceso rápido
+    keyboard = [
+        [InlineKeyboardButton("📝 Crear cuenta", callback_data="crear_cuenta")],
+        [InlineKeyboardButton("🔧 Modificar cuenta", callback_data="modificar_cuenta")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
     
     if usuario is None:
+        # Usuario nuevo: mostrar botones de registro
         await update.message.reply_text(
             f"✨ ¡Bienvenido {nombre} al Durmstrang's Quidditch! ✨\n\n"
             "Para comenzar, necesitas crear una cuenta.\n\n"
-            "Comando: /crear_cuenta\n\n"
-            "Serás parte de una de las tres casas: Galkin ❤️, Darfor 💜 u Olsson 💚"
+            "Usa los botones de abajo para navegar:",
+            reply_markup=reply_markup,
+            parse_mode="Markdown"
         )
     else:
+        # Usuario existente: mostrar botones de acciones
+        keyboard_acciones = [
+            [InlineKeyboardButton("📚 Aprender", callback_data="ir_a_aprender")],
+            [InlineKeyboardButton("🏋️ Practicar", callback_data="ir_a_practicar")],
+            [InlineKeyboardButton("🏆 Jugar", callback_data="ir_a_jugar")],
+            [InlineKeyboardButton("🔧 Modificar cuenta", callback_data="modificar_cuenta")]
+        ]
+        reply_markup_acciones = InlineKeyboardMarkup(keyboard_acciones)
+
         await update.message.reply_text(
             f"¡Bienvenido de vuelta {usuario[1]}!\n"
             f"Casa: {usuario[2]}\n"
             f"Cargo: {usuario[3]}\n\n"
-            "¿Qué deseas hacer?\n"
-            "/aprender - Ver reglas del juego\n"
-            "/practicar - Entrenar una posición\n"
-            "/jugar - Iniciar una partida"
+            "¿Qué deseas hacer?",
+            reply_markup=reply_markup_acciones,
+            parse_mode="Markdown"
         )
 
 async def crear_cuenta(update, context):
@@ -1218,6 +1235,95 @@ async def salir_practica(update, context):
 async def jugar(update, context):
     await update.message.reply_text("🏆 *MODO JUGAR*\n\nPróximamente.", parse_mode="Markdown")
 
+async def boton_crear_cuenta(update, context):
+    query = update.callback_query
+    await query.answer()
+    
+    # Redirigir a la creación de cuenta
+    await crear_cuenta(update, context)
+    # Eliminar el mensaje del botón para no acumular
+    await query.edit_message_reply_markup(reply_markup=None)
+
+async def boton_modificar_cuenta(update, context):
+    query = update.callback_query
+    await query.answer()
+    
+    user_id = update.effective_user.id
+    
+    conn = sqlite3.connect('quidditch.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT casa, emblema FROM usuarios WHERE id_telegram = ?", (user_id,))
+    resultado = cursor.fetchone()
+    conn.close()
+    
+    if resultado is None:
+        await query.edit_message_text(
+            "❌ No tienes una cuenta activa.\n"
+            "Usa /crear_cuenta para registrarte.",
+            parse_mode="Markdown"
+        )
+        return
+    
+    casa_actual = resultado[0]
+    emblema_actual = resultado[1]
+    
+    keyboard = [
+        [InlineKeyboardButton("❤️ Cambiar a Galkin", callback_data="cambiar_casa_Galkin")],
+        [InlineKeyboardButton("💜 Cambiar a Darfor", callback_data="cambiar_casa_Darfor")],
+        [InlineKeyboardButton("💚 Cambiar a Olsson", callback_data="cambiar_casa_Olsson")],
+        [InlineKeyboardButton("❌ Cancelar", callback_data="cancelar_cambio")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(
+        f"🔧 *Modificar cuenta*\n\n"
+        f"Casa actual: {emblema_actual} {casa_actual}\n\n"
+        f"¿A qué casa quieres cambiarte?\n\n"
+        f"*Nota:* Al cambiar de casa, tus estadísticas se mantienen.",
+        reply_markup=reply_markup,
+        parse_mode="Markdown"
+    )
+
+async def cambiar_casa(update, context):
+    query = update.callback_query
+    await query.answer()
+    
+    user_id = update.effective_user.id
+    nueva_casa = query.data.replace("cambiar_casa_", "")  # Galkin, Darfor, Olsson
+    
+    # Convertir nombre a emoji
+    nuevo_emblema = "❤️" if nueva_casa == "Galkin" else "💜" if nueva_casa == "Darfor" else "💚"
+    
+    conn = sqlite3.connect('quidditch.db')
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE usuarios SET casa = ?, emblema = ? WHERE id_telegram = ?",
+        (nueva_casa, nuevo_emblema, user_id)
+    )
+    conn.commit()
+    conn.close()
+    
+    await query.edit_message_text(
+        f"✅ *Casa actualizada correctamente*\n\n"
+        f"Ahora perteneces a {nuevo_emblema} {nueva_casa}.\n\n"
+        f"Usa /start para ver el menú principal.",
+        parse_mode="Markdown"
+    )
+
+async def cancelar_cambio(update, context):
+    query = update.callback_query
+    await query.answer()
+    await query.edit_message_text(
+        "✅ Cambio cancelado. Tu casa sigue igual.\n\n"
+        "Usa /start para volver al menú.",
+        parse_mode="Markdown"
+    )
+
+async def ir_a_aprender(update, context):
+    query = update.callback_query
+    await query.answer()
+    await aprender(update, context)
+
 # ============= INICIAR EL BOT =============
 def main():
     iniciar_bd()
@@ -1238,6 +1344,13 @@ def main():
     app.add_handler(CallbackQueryHandler(boton_aprender, pattern="aprender_"))
     app.add_handler(CallbackQueryHandler(ir_a_practicar, pattern="ir_a_practicar"))
     app.add_handler(CallbackQueryHandler(regresar_menu, pattern="regresar"))
+    app.add_handler(CallbackQueryHandler(boton_crear_cuenta, pattern="crear_cuenta"))
+    app.add_handler(CallbackQueryHandler(boton_modificar_cuenta, pattern="modificar_cuenta"))
+    app.add_handler(CallbackQueryHandler(cambiar_casa, pattern="cambiar_casa_"))
+    app.add_handler(CallbackQueryHandler(cancelar_cambio, pattern="cancelar_cambio"))
+    app.add_handler(CallbackQueryHandler(ir_a_aprender, pattern="ir_a_aprender"))
+    app.add_handler(CallbackQueryHandler(ir_a_practicar, pattern="ir_a_practicar"))
+    app.add_handler(CallbackQueryHandler(jugar, pattern="ir_a_jugar"))
 
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, manejar_mensajes))
     
