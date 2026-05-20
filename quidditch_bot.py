@@ -253,7 +253,7 @@ async def manejar_mensajes(update, context):
                         f"🎯 ¡Disparo realizado!\n"
                         f"Casa: {casa} | Aro: {aro}\n"
                         f"Números: {''.join(numeros)}\n\n"
-                        f"🟡 Defensa del guardián: {flechas}\n\n"
+                        f"🟡 La defensa del guardián sería: 🤍🧹{aro}{flechas}, pero se demoró en responder.\n\n"
                         f"✅ ¡GOL! +100 puntos"
                     )
                 
